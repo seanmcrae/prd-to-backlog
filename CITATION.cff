@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "prd-to-backlog"
+abstract: "Turns a markdown product requirements document into a traceable, linted backlog and exports it to GitHub Issues, Jira and Linear."
+type: software
+authors:
+  - family-names: McRae
+    given-names: Sean
+version: 0.1.0
+date-released: 2026-10-07
+license: MIT
+repository-code: "https://github.com/seanmcrae/prd-to-backlog"
+url: "https://seanmcrae.github.io/prd-to-backlog/"
+keywords:
+  - product requirements
+  - backlog
+  - user stories
+  - acceptance criteria
+  - traceability

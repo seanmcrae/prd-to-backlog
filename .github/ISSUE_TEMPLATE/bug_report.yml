@@ -1,0 +1,41 @@
+name: Bug report
+description: Something produced wrong output, crashed, or did not match the docs.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The exact command and a minimal PRD snippet that triggers it. Please do not paste confidential documents.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "0.1.0 or a commit SHA"
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Generator
+      options:
+        - heuristic (default)
+        - anthropic
+        - openai
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: "node --version"
