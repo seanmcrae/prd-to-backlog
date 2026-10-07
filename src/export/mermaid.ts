@@ -1,5 +1,6 @@
 import type { Backlog } from "../model/schema.js";
 import { findCycles } from "../lint/graph.js";
+import { formatPoints } from "./common.js";
 
 function nodeId(id: string): string {
   return id.replace(/[^A-Za-z0-9_]/g, "_");
@@ -17,7 +18,7 @@ export function toMermaid(backlog: Backlog): string {
     if (stories.length === 0) continue;
     lines.push(`  subgraph ${nodeId(epic.id)}["${label(epic.title)}"]`);
     for (const s of stories) {
-      const points = s.estimate ? ` (${s.estimate.points} pts)` : "";
+      const points = s.estimate ? ` (${formatPoints(s.estimate.points)})` : "";
       lines.push(`    ${nodeId(s.id)}["${label(`${s.id}: ${s.title}${points}`)}"]`);
     }
     lines.push("  end");

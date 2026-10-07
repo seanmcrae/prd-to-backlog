@@ -1,5 +1,5 @@
 import type { Backlog } from "../model/schema.js";
-import { blockersOf, requirementsOf, storyStatement, traceLine } from "./common.js";
+import { blockersOf, formatPoints, requirementsOf, storyStatement, traceLine } from "./common.js";
 import { toMermaid } from "./mermaid.js";
 
 /** Review document: what a PM reads before pushing the backlog to a tracker. */
@@ -20,7 +20,7 @@ export function toMarkdown(backlog: Backlog): string {
     out.push(`## ${epic.id}: ${epic.title}`, "");
     if (epic.description) out.push(epic.description, "");
     for (const story of backlog.stories.filter((s) => s.epicId === epic.id)) {
-      const pts = story.estimate ? `${story.estimate.points} pts` : "unestimated";
+      const pts = story.estimate ? formatPoints(story.estimate.points) : "unestimated";
       out.push(`### ${story.id}: ${story.title}`, "");
       out.push(storyStatement(story), "");
       out.push(`- Priority: ${story.priority} | Estimate: ${pts}`);

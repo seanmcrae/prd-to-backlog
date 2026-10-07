@@ -68,5 +68,8 @@ export function estimateStory(text: string, criteriaCount: number): Estimate {
     }
   }
   const points = SCALE.find(([max]) => score <= max)?.[1] ?? 13;
-  return { points, rationale: `${reasons.join("; ")} = score ${score} -> ${points} pts` };
+  return {
+    points,
+    rationale: `${reasons.join("; ")} = score ${score} -> ${points} ${points === 1 ? "pt" : "pts"}`,
+  };
 }

@@ -1,0 +1,29 @@
+graph LR
+  subgraph EP_2f525c["Sending invites"]
+    ST_456a6d["ST-456a6d: Invite teammates by entering one or more email addresses (5 pts)"]
+    ST_b5ddb7["ST-b5ddb7: Set the role (Admin or Member) for each invite (1 pt)"]
+    ST_cb792f["ST-cb792f: Resend a pending invite (1 pt)"]
+  end
+  subgraph EP_8bb632["Accepting invites"]
+    ST_c1b247["ST-c1b247: Accept an invite from the email link and join the workspace (2 pts)"]
+    ST_2ab69f["ST-2ab69f: Invite links must expire after 7 days (1 pt)"]
+    ST_b7f7fa["ST-b7f7fa: The invite flow should be fast and easy for invitees (1 pt)"]
+  end
+  subgraph EP_2f8b9d["Managing invites"]
+    ST_51ea02["ST-51ea02: View all pending invites with sender, role and sent date (1 pt)"]
+    ST_b39715["ST-b39715: Revoke a pending invite (1 pt)"]
+    ST_55acad["ST-55acad: Record an audit log entry for every invite sent, accepted, resent or revoked (2 pts)"]
+  end
+  subgraph EP_ea441d["Team Invites: non-functional requirements"]
+    ST_9b69c7["ST-9b69c7: Invite emails must be sent through the existing transactional email provider (3 pts)"]
+    ST_03f995["ST-03f995: Rate-limit invites to 200 per workspace per day (3 pts)"]
+    ST_c74591["ST-c74591: Invite tokens must be single-use and at least 128 bits of entropy (2 pts)"]
+  end
+  ST_456a6d -.-> ST_cb792f
+  ST_456a6d -.-> ST_c1b247
+  ST_456a6d -.-> ST_2ab69f
+  ST_456a6d -.-> ST_b7f7fa
+  ST_456a6d -.-> ST_51ea02
+  ST_456a6d -.-> ST_b39715
+  ST_456a6d -.-> ST_9b69c7
+  ST_456a6d -.-> ST_c74591

@@ -1,0 +1,25 @@
+graph LR
+  subgraph EP_0e7c4c["Usage-Based Billing"]
+    ST_FR_1["ST-FR-1: Meter every billable API call per customer account with an idempotency key (3 pts)"]
+    ST_FR_2["ST-FR-2: Aggregate metered usage into hourly totals per account and price dimension (5 pts)"]
+    ST_FR_3["ST-FR-3: View current-period usage and projected charges on the billing page (1 pt)"]
+    ST_FR_4["ST-FR-4: Generate a monthly invoice that itemises seat charges and usage charges (1 pt)"]
+    ST_FR_5["ST-FR-5: Set a monthly spend alert threshold and receive an email when 80% and 100% are... (1 pt)"]
+    ST_FR_6["ST-FR-6: Query usage for their account through a usage API endpoint (3 pts)"]
+    ST_FR_7["ST-FR-7: Export monthly usage and invoice lines as CSV for reconciliation (5 pts)"]
+    ST_FR_8["ST-FR-8: Download past invoices as PDF (3 pts)"]
+  end
+  subgraph EP_83bd65["Usage-Based Billing: non-functional requirements"]
+    ST_0855f9["ST-0855f9: Usage ingestion must sustain 5,000 events per second with p99 write latency... (2 pts)"]
+    ST_7903c6["ST-7903c6: Invoices must reconcile to metered usage with zero unexplained difference at... (2 pts)"]
+    ST_7adf64["ST-7adf64: Pricing changes must be versioned (1 pt)"]
+  end
+  ST_FR_2 --> ST_FR_3
+  ST_FR_2 --> ST_FR_4
+  ST_FR_4 --> ST_FR_7
+  ST_FR_1 -.-> ST_FR_2
+  ST_FR_2 -.-> ST_FR_6
+  ST_FR_2 -.-> ST_FR_7
+  ST_FR_4 -.-> ST_FR_8
+  ST_FR_2 -.-> ST_0855f9
+  ST_FR_4 -.-> ST_7903c6

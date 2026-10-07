@@ -1,0 +1,117 @@
+[
+  {
+    "title": "[EP-0e7c4c] Usage-Based Billing",
+    "body": "We currently bill a flat monthly price per seat. Customers running large API workloads pay the same as light users, and finance cannot price heavy usage. This PRD introduces metered billing for API calls on top of the seat price.\n\n### Stories\n- [ ] [ST-FR-1] Meter every billable API call per customer account with an idempotency key\n- [ ] [ST-FR-2] Aggregate metered usage into hourly totals per account and price dimension\n- [ ] [ST-FR-3] View current-period usage and projected charges on the billing page\n- [ ] [ST-FR-4] Generate a monthly invoice that itemises seat charges and usage charges\n- [ ] [ST-FR-5] Set a monthly spend alert threshold and receive an email when 80% and 100% are...\n- [ ] [ST-FR-6] Query usage for their account through a usage API endpoint\n- [ ] [ST-FR-7] Export monthly usage and invoice lines as CSV for reconciliation\n- [ ] [ST-FR-8] Download past invoices as PDF",
+    "labels": [
+      "epic"
+    ]
+  },
+  {
+    "title": "[EP-83bd65] Usage-Based Billing: non-functional requirements",
+    "body": "Requirements under \"Usage-Based Billing > Non-functional requirements\".\n\n### Stories\n- [ ] [ST-0855f9] Usage ingestion must sustain 5,000 events per second with p99 write latency...\n- [ ] [ST-7903c6] Invoices must reconcile to metered usage with zero unexplained difference at...\n- [ ] [ST-7adf64] Pricing changes must be versioned",
+    "labels": [
+      "epic"
+    ]
+  },
+  {
+    "title": "[ST-FR-1] Meter every billable API call per customer account with an idempotency key",
+    "body": "As a billing admin, I want the system to meter every billable API call per customer account with an idempotency key, so that it supports the goal \"Charge customers in proportion to API usage\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** the same idempotency key is received twice, **then** usage is counted once\n\n### Traceability\n- FR-1 (examples/usage-based-billing.md:33): The system must meter every billable API call per customer account with an idempotency key.\n\n### Estimate\n3 points. base 1; +2 distributed-state complexity (idempotency) = score 3 -> 3 pts\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:must",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-FR-2] Aggregate metered usage into hourly totals per account and price dimension",
+    "body": "As a billing admin, I want the system to aggregate metered usage into hourly totals per account and price dimension, so that it supports the goal \"Close the monthly books without manual usage reconciliation\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** an hour closes, **then** its totals are final within 15 minutes\n\n### Traceability\n- FR-2 (examples/usage-based-billing.md:34): The system must aggregate metered usage into hourly totals per account and price dimension.\n\n### Estimate\n5 points. base 1; +2 distributed-state complexity (aggregate); +1 measurable performance target (within 15 minutes) = score 4 -> 5 pts\n\n### Blocked by\n- [ST-FR-1] Meter every billable API call per customer account with an idempotency key\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:must",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-FR-3] View current-period usage and projected charges on the billing page",
+    "body": "As a billing admin, I want to view current-period usage and projected charges on the billing page, so that it supports the goal \"Charge customers in proportion to API usage\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** the billing admin views current-period usage and projected charges on the billing page, **then** projected charges use the trailing 7-day average and are labelled as an estimate\n\n### Traceability\n- FR-3 (examples/usage-based-billing.md:35): Billing admins can view current-period usage and projected charges on the billing page. Depends on FR-2.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\n### Blocked by\n- [ST-FR-2] Aggregate metered usage into hourly totals per account and price dimension\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:must",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-FR-4] Generate a monthly invoice that itemises seat charges and usage charges",
+    "body": "As a billing admin, I want the system to generate a monthly invoice that itemises seat charges and usage charges, so that it supports the goal \"Charge customers in proportion to API usage\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** the system generates a monthly invoice that itemises seat charges and usage charges, **then** the system must generate a monthly invoice that itemises seat charges and usage charges\n\n### Traceability\n- FR-4 (examples/usage-based-billing.md:36): The system must generate a monthly invoice that itemises seat charges and usage charges. Depends on FR-2.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\n### Blocked by\n- [ST-FR-2] Aggregate metered usage into hourly totals per account and price dimension\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:must",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-FR-5] Set a monthly spend alert threshold and receive an email when 80% and 100% are...",
+    "body": "As a billing admin, I want to set a monthly spend alert threshold and receive an email when 80% and 100% are reached, so that it supports the goal \"Close the monthly books without manual usage reconciliation\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** usage crosses a threshold, **then** exactly one alert email is sent per threshold per period\n\n### Traceability\n- FR-5 (examples/usage-based-billing.md:37): Billing admins can set a monthly spend alert threshold and receive an email when 80% and 100% are reached.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-FR-6] Query usage for their account through a usage API endpoint",
+    "body": "As a developer, I want to query usage for their account through a usage API endpoint, so that it supports the goal \"Charge customers in proportion to API usage\".\n\n### Acceptance criteria\n- [ ] **Given** a developer, **when** the developer queries usage for their account through a usage API endpoint, **then** developers can query usage for their account through a usage API endpoint\n\n### Traceability\n- FR-6 (examples/usage-based-billing.md:38): Developers can query usage for their account through a usage API endpoint.\n\n### Estimate\n3 points. base 1; +2 external integration (api endpoint) = score 3 -> 3 pts\n\n### Blocked by\n- [ST-FR-2] Aggregate metered usage into hourly totals per account and price dimension\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-FR-7] Export monthly usage and invoice lines as CSV for reconciliation",
+    "body": "As a finance analyst, I want to export monthly usage and invoice lines as CSV for reconciliation, so that it supports the goal \"Close the monthly books without manual usage reconciliation\".\n\n### Acceptance criteria\n- [ ] **Given** a finance analyst, **when** the finance analyst exports monthly usage and invoice lines as CSV for reconciliation, **then** finance analysts can export monthly usage and invoice lines as CSV for reconciliation\n\n### Traceability\n- FR-7 (examples/usage-based-billing.md:39): Finance analysts can export monthly usage and invoice lines as CSV for reconciliation. Depends on FR-4.\n\n### Estimate\n5 points. base 1; +2 external integration (csv); +1 security or compliance (reconciliation) = score 4 -> 5 pts\n\n### Blocked by\n- [ST-FR-4] Generate a monthly invoice that itemises seat charges and usage charges\n- [ST-FR-2] Aggregate metered usage into hourly totals per account and price dimension\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-FR-8] Download past invoices as PDF",
+    "body": "As a billing admin, I want to download past invoices as PDF, so that it supports the goal \"Give customers a clear, near-real-time view of what they will be billed\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** the billing admin downloads past invoices as PDF, **then** billing admins can download past invoices as PDF\n\n### Traceability\n- FR-8 (examples/usage-based-billing.md:40): Billing admins can download past invoices as PDF.\n\n### Estimate\n3 points. base 1; +2 external integration (pdf) = score 3 -> 3 pts\n\n### Blocked by\n- [ST-FR-4] Generate a monthly invoice that itemises seat charges and usage charges\n\nEpic: EP-0e7c4c",
+    "labels": [
+      "story",
+      "priority:could",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-0855f9] Usage ingestion must sustain 5,000 events per second with p99 write latency...",
+    "body": "As a billing admin, I want usage ingestion to sustain 5,000 events per second with p99 write latency under 50 ms, so that it supports the goal \"Charge customers in proportion to API usage\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** the behaviour is exercised, **then** usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms\n\n### Traceability\n- REQ-0855f9 (examples/usage-based-billing.md:51): Usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms.\n\n### Estimate\n2 points. base 1; +1 measurable performance target (5,000 events, per second, p99) = score 2 -> 2 pts\n\n### Blocked by\n- [ST-FR-2] Aggregate metered usage into hourly totals per account and price dimension\n\nEpic: EP-83bd65",
+    "labels": [
+      "story",
+      "priority:must",
+      "non-functional",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-7903c6] Invoices must reconcile to metered usage with zero unexplained difference at...",
+    "body": "As a billing admin, I want invoices to reconcile to metered usage with zero unexplained difference at month close, so that it supports the goal \"Close the monthly books without manual usage reconciliation\".\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** the behaviour is exercised, **then** invoices must reconcile to metered usage with zero unexplained difference at month close\n\n### Traceability\n- REQ-7903c6 (examples/usage-based-billing.md:52): Invoices must reconcile to metered usage with zero unexplained difference at month close.\n\n### Estimate\n2 points. base 1; +1 security or compliance (reconcile) = score 2 -> 2 pts\n\n### Blocked by\n- [ST-FR-4] Generate a monthly invoice that itemises seat charges and usage charges\n\nEpic: EP-83bd65",
+    "labels": [
+      "story",
+      "priority:must",
+      "non-functional",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-7adf64] Pricing changes must be versioned",
+    "body": "As a billing admin, I want pricing changes to be versioned, so that past invoices can be regenerated exactly.\n\n### Acceptance criteria\n- [ ] **Given** a billing admin, **when** the behaviour is exercised, **then** pricing changes must be versioned so past invoices can be regenerated exactly\n\n### Traceability\n- REQ-7adf64 (examples/usage-based-billing.md:53): Pricing changes must be versioned so past invoices can be regenerated exactly.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\nEpic: EP-83bd65",
+    "labels": [
+      "story",
+      "priority:must",
+      "non-functional"
+    ]
+  }
+]

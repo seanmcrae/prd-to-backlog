@@ -1,0 +1,104 @@
+ID,Title,Description,Priority,Estimate,Labels,Status
+ST-456a6d,Invite teammates by entering one or more email addresses,"As a workspace admin, I want to invite teammates by entering one or more email addresses, so that it supports the goal ""Let workspace owners add their team without contacting support"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when an admin submits up to 20 valid addresses, then each address receives an invite email within 2 minutes
+- [ ] Given a workspace admin, when an address is malformed, then the form shows an inline error and no invite is sent for it
+- [ ] Given a workspace admin, when the address already belongs to a member, then the admin sees ""already a member""
+
+**Traceability**
+- REQ-456a6d (examples/team-invites.md:27): Workspace admins can invite teammates by entering one or more email addresses.",Medium,5,"Epic: Sending invites, benefit-inferred",Backlog
+ST-b5ddb7,Set the role (Admin or Member) for each invite,"As a workspace admin, I want to set the role (Admin or Member) for each invite, so that it supports the goal ""Keep workspace membership auditable for security reviews"".
+
+**Acceptance criteria**
+- [ ] Given a role is selected, when the invite is accepted, then the new member has that role
+
+**Traceability**
+- REQ-b5ddb7 (examples/team-invites.md:31): Workspace admins can set the role (Admin or Member) for each invite.",Medium,1,"Epic: Sending invites, benefit-inferred",Backlog
+ST-cb792f,Resend a pending invite,"As a workspace admin, I want to resend a pending invite, so that it supports the goal ""Keep workspace membership auditable for security reviews"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when the workspace admin resends a pending invite, then resending generates a new link and invalidates the previous one
+
+**Traceability**
+- REQ-cb792f (examples/team-invites.md:33): Workspace admins can resend a pending invite.
+
+**Blocked by:** ST-456a6d",Medium,1,"Epic: Sending invites, benefit-inferred",Backlog
+ST-c1b247,Accept an invite from the email link and join the workspace,"As an invitee, I want to accept an invite from the email link and join the workspace, so that it supports the goal ""Let workspace owners add their team without contacting support"".
+
+**Acceptance criteria**
+- [ ] Given an invitee, when an invitee with an existing account opens a valid link, then they join the workspace after one confirmation click
+- [ ] Given an invitee, when an invitee without an account opens a valid link, then they are taken to sign-up with the email prefilled
+
+**Traceability**
+- REQ-c1b247 (examples/team-invites.md:38): Invitees can accept an invite from the email link and join the workspace.
+
+**Blocked by:** ST-456a6d",Medium,2,"Epic: Accepting invites, benefit-inferred",Backlog
+ST-2ab69f,Invite links must expire after 7 days,"As a workspace admin, I want invite links to expire after 7 days, so that it supports the goal ""Let workspace owners add their team without contacting support"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when an invitee opens an expired link, then they see an expiry message and a button to request a new invite
+
+**Traceability**
+- REQ-2ab69f (examples/team-invites.md:41): Invite links must expire after 7 days.
+
+**Blocked by:** ST-456a6d",High,1,"Epic: Accepting invites, benefit-inferred",Backlog
+ST-b7f7fa,The invite flow should be fast and easy for invitees,"As an invitee, I want the invite flow to be fast and easy for invitees, so that it supports the goal ""Let workspace owners add their team without contacting support"".
+
+**Acceptance criteria**
+- [ ] Given an invitee, when the behaviour is exercised, then the invite flow should be fast and easy for invitees
+
+**Traceability**
+- REQ-b7f7fa (examples/team-invites.md:43): The invite flow should be fast and easy for invitees.
+
+**Blocked by:** ST-456a6d",Medium,1,"Epic: Accepting invites, benefit-inferred",Backlog
+ST-51ea02,"View all pending invites with sender, role and sent date","As a workspace admin, I want to view all pending invites with sender, role and sent date, so that it supports the goal ""Keep workspace membership auditable for security reviews"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when the workspace admin views all pending invites with sender, role and sent date, then workspace admins can view all pending invites with sender, role and sent date
+
+**Traceability**
+- REQ-51ea02 (examples/team-invites.md:47): Workspace admins can view all pending invites with sender, role and sent date.
+
+**Blocked by:** ST-456a6d",Medium,1,"Epic: Managing invites, benefit-inferred",Backlog
+ST-b39715,Revoke a pending invite,"As a workspace admin, I want to revoke a pending invite, so that it supports the goal ""Keep workspace membership auditable for security reviews"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when an admin revokes an invite, then its link stops working immediately
+
+**Traceability**
+- REQ-b39715 (examples/team-invites.md:48): Workspace admins can revoke a pending invite.
+
+**Blocked by:** ST-456a6d",Medium,1,"Epic: Managing invites, benefit-inferred",Backlog
+ST-55acad,"Record an audit log entry for every invite sent, accepted, resent or revoked","As a workspace admin, I want the system to record an audit log entry for every invite sent, accepted, resent or revoked, so that it supports the goal ""Let workspace owners add their team without contacting support"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when the system records an audit log entry for every invite sent, accepted, resent or revoked, then each entry includes actor, target email, action and timestamp in UTC
+
+**Traceability**
+- REQ-55acad (examples/team-invites.md:50): The system must record an audit log entry for every invite sent, accepted, resent or revoked.",High,2,"Epic: Managing invites, benefit-inferred",Backlog
+ST-9b69c7,Invite emails must be sent through the existing transactional email provider,"As a workspace admin, I want invite emails to be sent through the existing transactional email provider, so that it supports the goal ""Let workspace owners add their team without contacting support"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when the behaviour is exercised, then invite emails must be sent through the existing transactional email provider
+
+**Traceability**
+- REQ-9b69c7 (examples/team-invites.md:55): Invite emails must be sent through the existing transactional email provider.
+
+**Blocked by:** ST-456a6d",High,3,"Epic: Team Invites: non-functional requirements, non-functional, benefit-inferred",Backlog
+ST-03f995,Rate-limit invites to 200 per workspace per day,"As a workspace admin, I want the system to rate-limit invites to 200 per workspace per day, so that it supports the goal ""Reduce time from workspace creation to first collaborator joining to under 1 day"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when the system rate-limits invites to 200 per workspace per day, then the system must rate-limit invites to 200 per workspace per day
+
+**Traceability**
+- REQ-03f995 (examples/team-invites.md:56): The system must rate-limit invites to 200 per workspace per day.",High,3,"Epic: Team Invites: non-functional requirements, non-functional, benefit-inferred",Backlog
+ST-c74591,Invite tokens must be single-use and at least 128 bits of entropy,"As a workspace admin, I want invite tokens to be single-use and at least 128 bits of entropy, so that it supports the goal ""Let workspace owners add their team without contacting support"".
+
+**Acceptance criteria**
+- [ ] Given a workspace admin, when the behaviour is exercised, then invite tokens must be single-use and at least 128 bits of entropy
+
+**Traceability**
+- REQ-c74591 (examples/team-invites.md:57): Invite tokens must be single-use and at least 128 bits of entropy.
+
+**Blocked by:** ST-456a6d",High,2,"Epic: Team Invites: non-functional requirements, non-functional, benefit-inferred",Backlog

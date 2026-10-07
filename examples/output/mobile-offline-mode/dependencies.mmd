@@ -1,0 +1,17 @@
+graph LR
+  subgraph EP_5715ce["Offline Mode for the Field Inspections App"]
+    ST_c3081d["ST-c3081d: Download assigned inspections for offline use before leaving coverage (3 pts)"]
+    ST_e3f064["ST-e3f064: Fill in checklists, add notes and capture photos while offline (5 pts)"]
+    ST_5199d9["ST-5199d9: Sync queued changes to the server automatically in the background (3 pts)"]
+    ST_327858["ST-327858: Sync must resume after interruption without duplicating photos (3 pts)"]
+    ST_bc70e9["ST-bc70e9: Detect the conflict and let the inspector choose which version of each... (3 pts)"]
+    ST_7d05f0["ST-7d05f0: Show a clear offline indicator and the number of changes waiting to sync (3 pts)"]
+    ST_0d2dcf["ST-0d2dcf: Pre-fetch map tiles for assigned sites (3 pts)"]
+  end
+  subgraph EP_bfd533["Offline Mode for the Field Inspections App: non-functional requirements"]
+    ST_8aae2b["ST-8aae2b: Offline storage must support at least 50 inspections and 2 GB of photos per... (3 pts)"]
+    ST_34651f["ST-34651f: Local data must be encrypted with a key stored in the platform keystore (2 pts)"]
+    ST_6fe87c["ST-6fe87c: Sync of a 20-photo inspection should complete within 3 minutes on a 3G... (5 pts)"]
+  end
+  ST_5199d9 -.-> ST_327858
+  ST_5199d9 -.-> ST_6fe87c

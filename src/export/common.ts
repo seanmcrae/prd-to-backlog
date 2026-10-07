@@ -29,3 +29,7 @@ export const PRIORITY_LABEL: Record<Priority, string> = {
   should: "Medium",
   could: "Low",
 };
+
+export function formatPoints(points: number): string {
+  return `${points} ${points === 1 ? "pt" : "pts"}`;
+}

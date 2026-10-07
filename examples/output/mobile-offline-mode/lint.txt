@@ -1,0 +1,16 @@
+Score: 94/100 (A)
+Story quality: 90/100
+Traceability: 10/10 requirements covered (100%)
+Dependency cycles: 0
+Findings: 0 errors, 10 warnings, 9 info
+
+warning AC-7d05f0-1    untestable-criterion         Then-clause uses subjective terms (clear): "the app should show a clear offline indicator and the number of changes waiting to sync". State a measurable or visible result.
+warning ST-0d2dcf      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-327858      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-34651f      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-5199d9      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-6fe87c      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-7d05f0      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-7d05f0      vague-language               Vague wording: "clear". Replace with a measurable target.
+warning ST-8aae2b      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-bc70e9      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
