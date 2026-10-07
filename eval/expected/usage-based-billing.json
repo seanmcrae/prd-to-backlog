@@ -1,0 +1,31 @@
+{
+  "prd": "examples/usage-based-billing.md",
+  "note": "SYNTHETIC. Hand-written expectations for the synthetic usage-based billing PRD.",
+  "requirements": [
+    "meter every billable api call",
+    "aggregate metered usage into hourly totals",
+    "view current-period usage and projected charges",
+    "generate a monthly invoice",
+    "spend alert threshold",
+    "usage api endpoint",
+    "export monthly usage and invoice lines as csv",
+    "download past invoices as pdf",
+    "5,000 events per second",
+    "reconcile to metered usage",
+    "pricing changes must be versioned"
+  ],
+  "capabilities": [
+    { "name": "Idempotent metering", "keywords": ["idempotency"] },
+    { "name": "Hourly aggregation", "keywords": ["hourly", "total"] },
+    { "name": "Late totals finalised", "keywords": ["final", "15 minutes"] },
+    { "name": "Projected charges shown as estimate", "keywords": ["projected", "estimate"] },
+    { "name": "Itemised invoice", "keywords": ["invoice", "seat", "usage"] },
+    { "name": "Spend alerts at 80% and 100%", "keywords": ["alert", "threshold"] },
+    { "name": "One alert per threshold", "keywords": ["exactly", "one", "alert"] },
+    { "name": "Usage API", "keywords": ["usage", "api", "query"] },
+    { "name": "Finance CSV export", "keywords": ["csv", "reconciliation"] },
+    { "name": "Invoice PDF download", "keywords": ["pdf"] },
+    { "name": "Ingestion throughput", "keywords": ["events", "second"] },
+    { "name": "Versioned pricing", "keywords": ["pricing", "versioned"] }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "prd": "examples/mobile-offline-mode.md",
+  "note": "SYNTHETIC. Hand-written expectations for the synthetic mobile offline mode PRD.",
+  "requirements": [
+    "download assigned inspections for offline use",
+    "fill in checklists, add notes and capture photos while offline",
+    "sync queued changes to the server automatically",
+    "resume after interruption without duplicating photos",
+    "detect the conflict",
+    "offline indicator",
+    "pre-fetch map tiles",
+    "at least 50 inspections",
+    "platform keystore",
+    "within 3 minutes on a 3g connection"
+  ],
+  "capabilities": [
+    { "name": "Pre-download assigned work", "keywords": ["download", "assigned"] },
+    { "name": "Download includes documents", "keywords": ["checklists", "documents"] },
+    { "name": "Offline checklist entry", "keywords": ["checklists", "offline"] },
+    { "name": "Offline photos", "keywords": ["photos", "offline"] },
+    { "name": "Encrypted local storage", "keywords": ["encrypted"] },
+    { "name": "Background sync", "keywords": ["sync", "background"] },
+    { "name": "Resumable uploads", "keywords": ["resume", "duplicating"] },
+    { "name": "Field-level conflict resolution", "keywords": ["conflict", "field"] },
+    { "name": "Pending-changes indicator", "keywords": ["indicator", "waiting"] },
+    { "name": "Offline maps", "keywords": ["map", "tiles"] },
+    { "name": "Storage capacity", "keywords": ["50 inspections"] },
+    { "name": "Sync performance on 3G", "keywords": ["3g", "3 minutes"] },
+    { "name": "Cache retention policy", "keywords": ["cache", "retention"] }
+  ]
+}

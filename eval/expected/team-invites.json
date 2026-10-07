@@ -1,0 +1,32 @@
+{
+  "prd": "examples/team-invites.md",
+  "note": "SYNTHETIC. Hand-written expectations for the synthetic team-invites PRD.",
+  "requirements": [
+    "invite teammates by entering one or more email addresses",
+    "set the role",
+    "resend a pending invite",
+    "accept an invite from the email link",
+    "expire after 7 days",
+    "fast and easy",
+    "view all pending invites",
+    "revoke a pending invite",
+    "audit log entry",
+    "transactional email provider",
+    "rate-limit invites to 200",
+    "single-use"
+  ],
+  "capabilities": [
+    { "name": "Invite by email", "keywords": ["invite", "email"] },
+    { "name": "Reject malformed addresses", "keywords": ["malformed", "error"] },
+    { "name": "Detect existing members", "keywords": ["already", "member"] },
+    { "name": "Role on invite", "keywords": ["role"] },
+    { "name": "Resend invalidates old link", "keywords": ["resend", "invalidate"] },
+    { "name": "Join with existing account", "keywords": ["existing", "account", "join"] },
+    { "name": "Sign-up for new invitee", "keywords": ["sign-up", "prefilled"] },
+    { "name": "Expired link handling", "keywords": ["expired", "request"] },
+    { "name": "Revoke invite", "keywords": ["revoke"] },
+    { "name": "Audit trail", "keywords": ["audit", "timestamp"] },
+    { "name": "Rate limiting", "keywords": ["rate-limit"] },
+    { "name": "Secure tokens", "keywords": ["token", "entropy"] }
+  ]
+}
