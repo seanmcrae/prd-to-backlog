@@ -1,43 +1,72 @@
 # prd-to-backlog
 
-![CI](https://github.com/seanmcrae/prd-to-backlog/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/seanmcrae/prd-to-backlog/actions/workflows/ci.yml/badge.svg)](https://github.com/seanmcrae/prd-to-backlog/actions/workflows/ci.yml)
+[![Docs](https://github.com/seanmcrae/prd-to-backlog/actions/workflows/pages.yml/badge.svg)](https://seanmcrae.github.io/prd-to-backlog/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-339933.svg)](package.json)
+
+Turn a markdown PRD into a traceable, linted backlog, and export it to GitHub Issues, Jira or Linear.
+
+**Live docs:** <https://seanmcrae.github.io/prd-to-backlog/> shows each bundled sample PRD next to
+the backlog generated from it, with every story linked to the PRD lines it cites.
 
 Turning a PRD into tickets is slow, and it loses things. Requirements get merged or dropped,
 acceptance criteria get paraphrased into something nobody can test, and a month later nobody can
 say which ticket a PRD line became. `prd2backlog` parses a markdown PRD into requirements with
-stable IDs and source line numbers. It then generates epics, user stories, Given/When/Then
-acceptance criteria, estimates, dependencies and risks, all validated against a zod schema. A
-linter scores the result for INVEST, vague wording, testability, traceability coverage and
-dependency cycles. Exporters write GitHub Issues payloads, Jira CSV, Linear CSV, markdown and a
-mermaid dependency graph. The default generator is deterministic and runs offline. Anthropic
-and OpenAI adapters are optional.
+stable IDs and source line numbers, generates epics, user stories, Given/When/Then acceptance
+criteria, estimates, dependencies and risks, validates them against a zod schema, and lints the
+result. The default generator is deterministic and runs offline. Anthropic and OpenAI adapters
+are optional.
+
+On the three bundled synthetic PRDs, with the offline heuristic generator and no API keys, every
+labelled requirement is extracted, every requirement is traced to a story, and lint scores range
+from 94 to 97 out of 100:
+
+![Eval results for the heuristic generator on the bundled synthetic PRDs](docs/img/eval-results.svg)
 
 ## Quickstart
 
-Requires Node 20 or later.
+Requires Node 20 or later. One command installs, builds and generates a backlog for the sample
+team-invites PRD into `out/`:
 
 ```sh
-npm ci
-npm run build
-node dist/bin.js generate examples/team-invites.md --out out/
+npm ci && npm run build && node dist/bin.js generate examples/team-invites.md --out out/
+```
+
+Then lint it and export it:
+
+```sh
 node dist/bin.js lint out/backlog.json
 node dist/bin.js export out/backlog.json --format jira --out out/jira.csv
 ```
 
-After `npm link` (or a global install) the same commands are available as `prd2backlog`.
+After `npm link` (or a global install) the same commands are available as `prd2backlog`. The
+Docker image runs the CLI:
+`docker build -t prd2backlog . && docker run --rm prd2backlog generate examples/team-invites.md`.
 
 | Command                                                         | What it does                                                       |
 | --------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `prd2backlog generate <prd.md> [--out dir] [--provider p]`      | Writes `backlog.json` and a reviewable `backlog.md`                |
 | `prd2backlog lint <backlog.json> [--format json] [--min-score]` | Scored report; `--min-score` exits 1 below the threshold (CI gate) |
 | `prd2backlog export <backlog.json> --format <f> [--out file]`   | `github`, `jira`, `linear`, `markdown`, `mermaid`                  |
-| `prd2backlog serve [--port 8787]`                               | HTTP API: `POST /generate`, `POST /lint`, `POST /export`           |
+| `prd2backlog serve [--port 8787] [--host 127.0.0.1]`            | HTTP API: `POST /generate`, `POST /lint`, `POST /export`           |
 
-Development: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`,
-`npm run eval`, `npm run demo` (regenerates `examples/output/`). To use an LLM, set
-`ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (see `.env.example`) and pass
-`--provider anthropic|openai`. The Docker image runs the CLI:
-`docker build -t prd2backlog . && docker run --rm prd2backlog generate examples/team-invites.md`.
+## Features
+
+- **Line-accurate parsing.** Sections, nested lists, tables and front matter, with 1-based line
+  spans kept for every block. Requirements get stable, content-addressed IDs (or the PRD's own
+  `FR-3` style IDs), priorities, personas, goals and out-of-scope items.
+- **Backlog generation.** Epics, user stories, Given/When/Then acceptance criteria, estimates with
+  the signals behind them, explicit and inferred dependencies, and risks from open questions.
+- **Traceability.** Every story cites the requirement and PRD line it came from; criteria are
+  marked `prd` or `inferred`.
+- **Linting and scoring.** INVEST checks, vague-wording and untestable-criterion rules,
+  traceability coverage, dependency-cycle detection, and a 0-100 score usable as a CI gate.
+- **Exports.** GitHub Issues payloads, Jira CSV, Linear CSV, markdown and a mermaid dependency
+  graph.
+- **Pluggable generators.** A deterministic offline heuristic (default), plus Anthropic and OpenAI
+  generators behind one interface with a zod validation and repair loop.
+- **CLI and HTTP API** over the same pipeline, and a static docs site built from the samples.
 
 ## Example output
 
@@ -87,23 +116,41 @@ Acceptance criteria:
 - [ ] **Given** a workspace admin, **when** the address already belongs to a member, **then** the admin sees "already a member".
 ```
 
-`npm run eval` on the bundled synthetic corpus (no API keys set, so only the heuristic
-generator ran):
+Every output file, including tracker exports, is committed under
+[`examples/output/`](examples/output/) and regenerated by `npm run demo`. A test fails if those
+samples drift from what the code produces.
 
-```text
-| PRD | Generator | Extraction recall | Capability coverage | Traceability | Lint score | Schema valid | Stories |
-| --- | --- | ---: | ---: | ---: | ---: | --- | ---: |
-| examples/mobile-offline-mode.md | heuristic | 100% | 92% | 100% | 94 | yes | 10 |
-| examples/team-invites.md | heuristic | 100% | 100% | 100% | 97 | yes | 12 |
-| examples/usage-based-billing.md | heuristic | 100% | 100% | 100% | 96 | yes | 11 |
+## Results
 
-- examples/mobile-offline-mode.md / heuristic: missed Cache retention policy
-```
+`npm run eval` on the bundled synthetic corpus (no API keys set, so only the heuristic generator
+ran):
+
+| PRD                               | Generator | Extraction recall | Capability coverage | Traceability | Lint score | Schema valid | Stories |
+| --------------------------------- | --------- | ----------------: | ------------------: | -----------: | ---------: | ------------ | ------: |
+| `examples/mobile-offline-mode.md` | heuristic |              100% |                 92% |         100% |         94 | yes          |      10 |
+| `examples/team-invites.md`        | heuristic |              100% |                100% |         100% |         97 | yes          |      12 |
+| `examples/usage-based-billing.md` | heuristic |              100% |                100% |         100% |         96 | yes          |      11 |
 
 The one miss is expected. Cache retention appears in the offline PRD only as an open question,
-so it becomes a risk rather than a story. Every output file, including tracker exports, is
-committed under [`examples/output/`](examples/output/). A test fails if those samples drift
-from what the code produces.
+so it becomes a risk rather than a story. The chart above is drawn from the same run by
+`npm run chart`, and a test fails if the committed SVG drifts from the code's output.
+
+## How evaluation works
+
+Each bundled PRD has a hand-written expectation file in `eval/expected/`. The expectations are
+deliberately independent of any generator's wording:
+
+- **Extraction recall:** share of expected requirement phrases found (case-insensitive) in some
+  requirement the parser extracted.
+- **Capability coverage:** share of named capabilities (for example "Revoke invite" or
+  "Expired link handling") whose keywords all appear, matched on word starts, in at least one
+  story's title, want, benefit or acceptance criteria.
+- **Traceability:** share of extracted requirements cited by at least one story.
+- **Lint score** and **schema validity:** the linter's 0-100 score and whether the backlog
+  passes the zod schema and referential checks.
+
+`npm run eval` scores every available generator: the heuristic always, and the Anthropic or
+OpenAI generator when its API key is set. Add `--json` for per-case details.
 
 ## Architecture
 
@@ -122,18 +169,6 @@ flowchart LR
   Backlog --> Export[exporters<br/>GitHub, Jira, Linear, markdown, mermaid]
   Lint --> Report[score report]
 ```
-
-| Module                        | Responsibility                                                                    |
-| ----------------------------- | --------------------------------------------------------------------------------- |
-| `src/prd/markdown.ts`         | Block-level markdown reader that keeps 1-based line spans for every block         |
-| `src/prd/extract.ts`          | Section roles, requirement extraction, content-addressed IDs, acceptance notes    |
-| `src/model/schema.ts`         | zod schemas for the backlog plus referential checks (unique IDs, resolvable refs) |
-| `src/generate/heuristic/`     | Story phrasing, criteria, signal-based estimates, dependency and risk inference   |
-| `src/generate/llm/`           | Provider-agnostic generator, prompt, repair loop, Anthropic and OpenAI clients    |
-| `src/lint/`                   | Rules, scoring, iterative Tarjan SCC for cycles                                   |
-| `src/export/`                 | Tracker formats and the mermaid graph                                             |
-| `src/eval/`, `eval/`          | Coverage scoring against hand-written expectations                                |
-| `src/cli.ts`, `src/server.ts` | commander CLI and Hono API over the same pipeline                                 |
 
 ## Design decisions
 
@@ -169,8 +204,45 @@ flowchart LR
 All PRDs in `examples/` are **synthetic**. I wrote them for this repo and each one says so in
 its header: team invites, usage-based billing, and offline mode for a field-inspections mobile
 app. They do not describe a real product, company or customer. The eval expectations in
-`eval/expected/` are also hand-written and synthetic. No external datasets are used or
-downloaded.
+`eval/expected/` are also hand-written and synthetic. They are released under the same MIT
+license as the code. No external datasets are used or downloaded.
+
+## Configuration
+
+Nothing needs configuring for the default offline generator. The LLM generators read their
+settings from the environment (see [`.env.example`](.env.example)):
+
+| Variable            | Used by                | Default             |
+| ------------------- | ---------------------- | ------------------- |
+| `ANTHROPIC_API_KEY` | `--provider anthropic` | required for it     |
+| `ANTHROPIC_MODEL`   | `--provider anthropic` | `claude-sonnet-4-5` |
+| `OPENAI_API_KEY`    | `--provider openai`    | required for it     |
+| `OPENAI_MODEL`      | `--provider openai`    | `gpt-4.1`           |
+
+`generate` also accepts `--model` to override the model and `--max-attempts` (default 3) for the
+validation and repair loop. `serve` binds to `127.0.0.1:8787` by default; pass `--host 0.0.0.0`
+to listen on all interfaces. The API is stateless and rejects request bodies over 1 MB with 413.
+
+## Project layout
+
+| Path                          | Responsibility                                                                    |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| `src/prd/markdown.ts`         | Block-level markdown reader that keeps 1-based line spans for every block         |
+| `src/prd/extract.ts`          | Section roles, requirement extraction, content-addressed IDs, acceptance notes    |
+| `src/model/schema.ts`         | zod schemas for the backlog plus referential checks (unique IDs, resolvable refs) |
+| `src/generate/heuristic/`     | Story phrasing, criteria, signal-based estimates, dependency and risk inference   |
+| `src/generate/llm/`           | Provider-agnostic generator, prompt, repair loop, Anthropic and OpenAI clients    |
+| `src/lint/`                   | Rules, scoring, iterative Tarjan SCC for cycles                                   |
+| `src/export/`                 | Tracker formats and the mermaid graph                                             |
+| `src/eval/`, `eval/`          | Coverage scoring against hand-written expectations                                |
+| `src/cli.ts`, `src/server.ts` | commander CLI and Hono API over the same pipeline                                 |
+| `scripts/site/`               | Offline docs site generator and the dependency-free SVG chart and graph renderer  |
+| `examples/`                   | Synthetic sample PRDs and their committed generated outputs                       |
+| `test/`                       | vitest unit and integration tests; no network, no API keys                        |
+
+Development scripts: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`,
+`npm run eval`, `npm run demo` (regenerates `examples/output/`), `npm run chart` (regenerates
+`docs/img/eval-results.svg`) and `npm run site` (builds the docs site into `site/`).
 
 ## Limitations
 
@@ -193,6 +265,13 @@ downloaded.
 
 See [docs/PRODUCT.md](docs/PRODUCT.md) for the problem framing, success metrics and the
 now / next / later roadmap. Two-way sync with trackers is the main item under "later".
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and the checks CI runs, and
+[SECURITY.md](SECURITY.md) for reporting vulnerabilities. Changes are listed in
+[CHANGELOG.md](CHANGELOG.md). If you use this in published work, [CITATION.cff](CITATION.cff)
+has the citation details.
 
 ## License
 
