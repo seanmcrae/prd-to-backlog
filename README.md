@@ -196,4 +196,4 @@ now / next / later roadmap. Two-way sync with trackers is the main item under "l
 
 ## License
 
-MIT, copyright 2026 Sean Wayne. See [LICENSE](LICENSE).
+MIT, copyright 2026 Sean McRae. See [LICENSE](LICENSE).

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Turn a product requirements document into a traceable, linted backlog and export it to tracker formats.",
   "license": "MIT",
-  "author": "Sean Wayne",
+  "author": "Sean McRae",
   "type": "module",
   "engines": {
     "node": ">=20"
