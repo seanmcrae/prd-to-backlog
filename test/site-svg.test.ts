@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { barChart, escapeXml, graphSvg, layoutGraph, wrapText } from "../scripts/site/svg.js";
+import {
+  barChart,
+  escapeXml,
+  graphSvg,
+  isVirtual,
+  layoutGraph,
+  wrapText,
+} from "../scripts/site/svg.js";
 
 const node = (id: string) => ({ id, label: id });
 
 describe("wrapText", () => {
   it("wraps on word boundaries", () => {
     expect(wrapText("one two three four", 9)).toEqual(["one two", "three", "four"]);
+  });
+
+  it("keeps explicit line breaks", () => {
+    expect(wrapText("parser\nline spans", 40)).toEqual(["parser", "line spans"]);
   });
 
   it("truncates with an ellipsis past maxLines", () => {
@@ -24,13 +35,13 @@ describe("layoutGraph", () => {
     expect(Object.fromEntries(layerOf)).toEqual({ a: 0, b: 1, c: 2, d: 1 });
   });
 
-  it("ignores feedback edges when layering", () => {
-    const { layerOf } = layoutGraph(["a", "b"].map(node), [
-      { from: "a", to: "b" },
-      { from: "b", to: "a", feedback: true },
+  it("points the cycle-closing edge backwards", () => {
+    const { layerOf } = layoutGraph(["gen", "llm", "repair"].map(node), [
+      { from: "gen", to: "llm" },
+      { from: "llm", to: "repair" },
+      { from: "repair", to: "llm" },
     ]);
-    expect(layerOf.get("a")).toBe(0);
-    expect(layerOf.get("b")).toBe(1);
+    expect(Object.fromEntries(layerOf)).toEqual({ gen: 0, llm: 1, repair: 2 });
   });
 
   it("terminates and places every node when the graph has a cycle", () => {
@@ -40,6 +51,19 @@ describe("layoutGraph", () => {
       { from: "c", to: "b" },
     ]);
     expect(layers.flat().sort()).toEqual(["a", "b", "c"]);
+  });
+
+  it("routes an edge that skips layers through one waypoint per crossed layer", () => {
+    const { layers, waypoints } = layoutGraph(["a", "b", "c", "d"].map(node), [
+      { from: "a", to: "b" },
+      { from: "b", to: "c" },
+      { from: "c", to: "d" },
+      { from: "a", to: "d" },
+    ]);
+    expect(waypoints.get(3)).toHaveLength(2);
+    expect(layers[1]?.filter(isVirtual)).toHaveLength(1);
+    expect(layers[2]?.filter(isVirtual)).toHaveLength(1);
+    expect(waypoints.has(0)).toBe(false);
   });
 
   it("orders a layer by the position of its predecessors", () => {
@@ -71,6 +95,21 @@ describe("svg output", () => {
     expect(svg).toContain('stroke="#c0392b"');
   });
 
+  it("labels edges and grows the canvas for backward loops", () => {
+    const flat = graphSvg(["a", "b"].map(node), [{ from: "a", to: "b" }], { ariaLabel: "x" });
+    const looped = graphSvg(
+      ["a", "b"].map(node),
+      [
+        { from: "a", to: "b" },
+        { from: "b", to: "a", label: "retry" },
+      ],
+      { ariaLabel: "x" },
+    );
+    const heightOf = (svg: string) => Number(/height="(\d+(?:\.\d+)?)"/.exec(svg)?.[1]);
+    expect(looped).toContain(">retry</text>");
+    expect(heightOf(looped)).toBeGreaterThan(heightOf(flat));
+  });
+
   it("renders a bar and value label per series and group, clamped to the axis", () => {
     const svg = barChart({
       title: "Scores",
@@ -98,5 +137,34 @@ describe("svg output", () => {
         ],
       }),
     );
+  });
+});
+
+describe("graph direction", () => {
+  const nodes = ["a", "b", "c"].map(node);
+  const edges = [
+    { from: "a", to: "b" },
+    { from: "b", to: "c" },
+  ];
+  const size = (svg: string) => {
+    const m = /viewBox="0 0 (\d+) (\d+)"/.exec(svg);
+    return { w: Number(m?.[1]), h: Number(m?.[2]) };
+  };
+
+  it("lays a chain out wide for LR and tall for TB", () => {
+    const lr = size(graphSvg(nodes, edges, { ariaLabel: "lr" }));
+    const tb = size(graphSvg(nodes, edges, { ariaLabel: "tb", direction: "TB" }));
+    expect(lr.w).toBeGreaterThan(lr.h);
+    expect(tb.h).toBeGreaterThan(tb.w);
+  });
+
+  it("keeps an unlabelled backward loop inside the canvas", () => {
+    const svg = graphSvg(nodes, [...edges, { from: "c", to: "a" }], {
+      ariaLabel: "tb",
+      direction: "TB",
+    });
+    const { w } = size(svg);
+    const xs = [...svg.matchAll(/C(\d+(?:\.\d+)?),/g)].map((m) => Number(m[1]));
+    expect(Math.max(...xs)).toBeLessThanOrEqual(w);
   });
 });
