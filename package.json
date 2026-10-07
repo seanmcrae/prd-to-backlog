@@ -8,8 +8,16 @@
   "engines": {
     "node": ">=20"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "bin": {
-    "prd2backlog": "dist/cli.js"
+    "prd2backlog": "dist/bin.js"
   },
   "files": [
     "dist"
