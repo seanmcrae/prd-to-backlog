@@ -1,7 +1,8 @@
 node_modules/
-dist/
-coverage/
-out/
+/dist/
+/coverage/
+/out/
+/site/
 .cache/
 .eslintcache
 *.tsbuildinfo
@@ -11,5 +12,5 @@ out/
 *.pem
 .venv/
 venv/
-data/downloads/
+/data/downloads/
 .DS_Store

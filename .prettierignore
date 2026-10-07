@@ -1,6 +1,7 @@
 dist/
 coverage/
 out/
+site/
 package-lock.json
 examples/output/
 test/__snapshots__/

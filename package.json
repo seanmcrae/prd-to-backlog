@@ -4,6 +4,24 @@
   "description": "Turn a product requirements document into a traceable, linted backlog and export it to tracker formats.",
   "license": "MIT",
   "author": "Sean McRae",
+  "homepage": "https://seanmcrae.github.io/prd-to-backlog/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seanmcrae/prd-to-backlog.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seanmcrae/prd-to-backlog/issues"
+  },
+  "keywords": [
+    "prd",
+    "backlog",
+    "user-stories",
+    "acceptance-criteria",
+    "jira",
+    "linear",
+    "product-management",
+    "llm"
+  ],
   "type": "module",
   "engines": {
     "node": ">=20"
