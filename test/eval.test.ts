@@ -78,3 +78,40 @@ describe("evaluateCase", () => {
     },
   );
 });
+
+describe("README results table", () => {
+  // The README quotes eval numbers in prose and a table; keep them tied to the code.
+  it("matches a fresh heuristic eval run", async () => {
+    const readme = readFileSync(new URL("README.md", root), "utf8");
+    const section = readme.split("\n## Results\n")[1]?.split("\n## ")[0] ?? "";
+    const rows = section
+      .split("\n")
+      .filter((line) => line.startsWith("| `"))
+      .map((line) =>
+        line
+          .split("|")
+          .slice(1, -1)
+          .map((cell) => cell.trim().replace(/`/g, "")),
+      );
+    const expected = await Promise.all(
+      [...expectations]
+        .sort((a, b) => a.prd.localeCompare(b.prd))
+        .map(async (exp) => {
+          const markdown = readFileSync(new URL(exp.prd, root), "utf8");
+          const r = await evaluateCase(markdown, exp, new HeuristicGenerator());
+          const pct = (x: number) => `${Math.round(x * 100)}%`;
+          return [
+            r.prd,
+            r.generator,
+            pct(r.extractionRecall),
+            pct(r.capabilityCoverage),
+            pct(r.traceability),
+            String(r.lintScore),
+            r.schemaValid ? "yes" : "no",
+            String(r.stories),
+          ];
+        }),
+    );
+    expect(rows).toEqual(expected);
+  });
+});
