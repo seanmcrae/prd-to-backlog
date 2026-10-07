@@ -50,7 +50,8 @@
     "eval": "tsx eval/run.ts",
     "demo": "npm run build && sh scripts/demo.sh",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm test",
-    "site": "tsx scripts/site/build.ts"
+    "site": "tsx scripts/site/build.ts",
+    "chart": "tsx scripts/site/chart.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.3",

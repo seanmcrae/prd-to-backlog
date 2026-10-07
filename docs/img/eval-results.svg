@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 414" width="760" height="414" role="img" aria-label="Heuristic generator on the bundled synthetic PRDs" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<rect width="760" height="414" fill="#ffffff"/>
+<text x="24" y="32" font-size="18" font-weight="600" fill="#111827">Heuristic generator on the bundled synthetic PRDs</text>
+<text x="24" y="54" font-size="13" fill="#4b5563">npm run eval, no API keys. Percentages, lint score out of 100.</text>
+<line x1="190" y1="72" x2="190" y2="356" stroke="#e5e7eb"/>
+<text x="190" y="372" font-size="11" fill="#6b7280" text-anchor="middle">0</text>
+<line x1="318.5" y1="72" x2="318.5" y2="356" stroke="#e5e7eb"/>
+<text x="318.5" y="372" font-size="11" fill="#6b7280" text-anchor="middle">25</text>
+<line x1="447" y1="72" x2="447" y2="356" stroke="#e5e7eb"/>
+<text x="447" y="372" font-size="11" fill="#6b7280" text-anchor="middle">50</text>
+<line x1="575.5" y1="72" x2="575.5" y2="356" stroke="#e5e7eb"/>
+<text x="575.5" y="372" font-size="11" fill="#6b7280" text-anchor="middle">75</text>
+<line x1="704" y1="72" x2="704" y2="356" stroke="#e5e7eb"/>
+<text x="704" y="372" font-size="11" fill="#6b7280" text-anchor="middle">100</text>
+<text x="178" y="112.5" font-size="13" fill="#111827" text-anchor="end">Offline Mode for the</text>
+<text x="178" y="127.5" font-size="13" fill="#111827" text-anchor="end">Field Inspections App</text>
+<rect x="190" y="78" width="514" height="16" rx="2" fill="#1d4ed8"><title>Offline Mode for the Field Inspections App: Extraction recall 100</title></rect>
+<text x="710" y="90" font-size="11" fill="#374151">100</text>
+<rect x="190" y="98" width="472.88" height="16" rx="2" fill="#0f766e"><title>Offline Mode for the Field Inspections App: Capability coverage 92</title></rect>
+<text x="668.88" y="110" font-size="11" fill="#374151">92</text>
+<rect x="190" y="118" width="514" height="16" rx="2" fill="#7c3aed"><title>Offline Mode for the Field Inspections App: Traceability 100</title></rect>
+<text x="710" y="130" font-size="11" fill="#374151">100</text>
+<rect x="190" y="138" width="483.15999999999997" height="16" rx="2" fill="#b45309"><title>Offline Mode for the Field Inspections App: Lint score 94</title></rect>
+<text x="679.16" y="150" font-size="11" fill="#374151">94</text>
+<text x="178" y="218" font-size="13" fill="#111827" text-anchor="end">Team Invites</text>
+<rect x="190" y="176" width="514" height="16" rx="2" fill="#1d4ed8"><title>Team Invites: Extraction recall 100</title></rect>
+<text x="710" y="188" font-size="11" fill="#374151">100</text>
+<rect x="190" y="196" width="514" height="16" rx="2" fill="#0f766e"><title>Team Invites: Capability coverage 100</title></rect>
+<text x="710" y="208" font-size="11" fill="#374151">100</text>
+<rect x="190" y="216" width="514" height="16" rx="2" fill="#7c3aed"><title>Team Invites: Traceability 100</title></rect>
+<text x="710" y="228" font-size="11" fill="#374151">100</text>
+<rect x="190" y="236" width="498.5799999999999" height="16" rx="2" fill="#b45309"><title>Team Invites: Lint score 97</title></rect>
+<text x="694.5799999999999" y="248" font-size="11" fill="#374151">97</text>
+<text x="178" y="316" font-size="13" fill="#111827" text-anchor="end">Usage-Based Billing</text>
+<rect x="190" y="274" width="514" height="16" rx="2" fill="#1d4ed8"><title>Usage-Based Billing: Extraction recall 100</title></rect>
+<text x="710" y="286" font-size="11" fill="#374151">100</text>
+<rect x="190" y="294" width="514" height="16" rx="2" fill="#0f766e"><title>Usage-Based Billing: Capability coverage 100</title></rect>
+<text x="710" y="306" font-size="11" fill="#374151">100</text>
+<rect x="190" y="314" width="514" height="16" rx="2" fill="#7c3aed"><title>Usage-Based Billing: Traceability 100</title></rect>
+<text x="710" y="326" font-size="11" fill="#374151">100</text>
+<rect x="190" y="334" width="493.44000000000005" height="16" rx="2" fill="#b45309"><title>Usage-Based Billing: Lint score 96</title></rect>
+<text x="689.44" y="346" font-size="11" fill="#374151">96</text>
+<rect x="190" y="384" width="12" height="12" rx="2" fill="#1d4ed8"/>
+<text x="208" y="394" font-size="12" fill="#374151">Extraction recall</text>
+<rect x="339" y="384" width="12" height="12" rx="2" fill="#0f766e"/>
+<text x="357" y="394" font-size="12" fill="#374151">Capability coverage</text>
+<rect x="502" y="384" width="12" height="12" rx="2" fill="#7c3aed"/>
+<text x="520" y="394" font-size="12" fill="#374151">Traceability</text>
+<rect x="616" y="384" width="12" height="12" rx="2" fill="#b45309"/>
+<text x="634" y="394" font-size="12" fill="#374151">Lint score</text>
+</svg>

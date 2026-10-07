@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildSite } from "../scripts/site/build.js";
+import { collectSiteData, resultsChart } from "../scripts/site/data.js";
 import { markdownSection } from "../scripts/site/page.js";
 import { mermaidBlock, parseFlowchart } from "../scripts/site/mermaid.js";
 
@@ -47,6 +48,14 @@ describe("markdownSection", () => {
     const md = "# T\n\n## A\n\none\n\n### A.1\n\ntwo\n\n## B\n\nthree\n";
     expect(markdownSection(md, "A")).toBe("one\n\n### A.1\n\ntwo");
     expect(() => markdownSection(md, "C")).toThrow(/not found/);
+  });
+});
+
+describe("committed headline chart", () => {
+  it("matches a fresh render (npm run chart)", async () => {
+    const { samples } = await collectSiteData(root);
+    const committed = await readFile(join(root, "docs/img/eval-results.svg"), "utf8");
+    expect(committed).toBe(resultsChart(samples));
   });
 });
 
