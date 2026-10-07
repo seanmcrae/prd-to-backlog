@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import { EXPORT_FORMATS, exportBacklog } from "./export/index.js";
 import { createGenerator, GENERATORS, type GeneratorOptions } from "./generate/index.js";
@@ -13,9 +14,20 @@ const GenerateBody = z.object({
 });
 const ExportBody = z.object({ backlog: z.unknown(), format: z.enum(EXPORT_FORMATS) });
 
+/** Largest accepted request body. A long PRD is tens of kilobytes; this leaves ample room. */
+export const MAX_BODY_BYTES = 1024 * 1024;
+
 /** Small JSON API over the same pipeline as the CLI. Stateless; nothing is stored. */
 export function createApp(options: GeneratorOptions = {}): Hono {
   const app = new Hono();
+
+  app.use(
+    "*",
+    bodyLimit({
+      maxSize: MAX_BODY_BYTES,
+      onError: (c) => c.json({ error: `request body exceeds ${MAX_BODY_BYTES} bytes` }, 413),
+    }),
+  );
 
   app.get("/health", (c) => c.json({ ok: true }));
 

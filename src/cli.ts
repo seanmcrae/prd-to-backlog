@@ -130,13 +130,14 @@ export function buildProgram(io: CliIo = defaultIo): Command {
     .command("serve")
     .description("Start the HTTP API (POST /generate, /lint, /export)")
     .option("--port <n>", "port", integer, 8787)
-    .action(async (opts: { port: number }) => {
+    .option("--host <host>", "interface to bind; use 0.0.0.0 to listen on all", "127.0.0.1")
+    .action(async (opts: { port: number; host: string }) => {
       const [{ serve }, { createApp }] = await Promise.all([
         import("@hono/node-server"),
         import("./server.js"),
       ]);
-      serve({ fetch: createApp({ env: io.env }).fetch, port: opts.port });
-      io.err(`prd2backlog API listening on http://localhost:${opts.port}\n`);
+      serve({ fetch: createApp({ env: io.env }).fetch, port: opts.port, hostname: opts.host });
+      io.err(`prd2backlog API listening on http://${opts.host}:${opts.port}\n`);
     });
 
   return program;

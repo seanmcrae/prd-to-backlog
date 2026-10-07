@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { createApp } from "../src/server.js";
+import { createApp, MAX_BODY_BYTES } from "../src/server.js";
 import { makeBacklog } from "./fixtures.js";
 
 const app = createApp({ env: {} });
@@ -32,6 +32,12 @@ describe("HTTP API", () => {
     expect(body.backlog.stories).toHaveLength(11);
     expect(body.backlog.source.path).toBe("billing.md");
     expect(body.lint.coverage.percent).toBe(100);
+  });
+
+  it("rejects bodies over the size limit before parsing them", async () => {
+    const res = await post("/generate", { markdown: "x".repeat(MAX_BODY_BYTES + 1) });
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: `request body exceeds ${MAX_BODY_BYTES} bytes` });
   });
 
   it("validates request bodies", async () => {
