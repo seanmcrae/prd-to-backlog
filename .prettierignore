@@ -1,0 +1,6 @@
+dist/
+coverage/
+out/
+package-lock.json
+examples/output/
+test/__snapshots__/

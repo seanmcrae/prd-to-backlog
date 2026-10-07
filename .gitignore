@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+out/
+.cache/
+.eslintcache
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.pem
+.venv/
+venv/
+data/downloads/
+.DS_Store
