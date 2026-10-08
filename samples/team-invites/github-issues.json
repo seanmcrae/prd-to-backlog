@@ -1,0 +1,141 @@
+[
+  {
+    "title": "[EP-2f525c] Sending invites",
+    "body": "Requirements under \"Team Invites > Requirements > Sending invites\".\n\n### Stories\n- [ ] [ST-456a6d] Invite teammates by entering one or more email addresses\n- [ ] [ST-b5ddb7] Set the role (Admin or Member) for each invite\n- [ ] [ST-cb792f] Resend a pending invite",
+    "labels": [
+      "epic"
+    ]
+  },
+  {
+    "title": "[EP-8bb632] Accepting invites",
+    "body": "Requirements under \"Team Invites > Requirements > Accepting invites\".\n\n### Stories\n- [ ] [ST-c1b247] Accept an invite from the email link and join the workspace\n- [ ] [ST-2ab69f] Invite links must expire after 7 days\n- [ ] [ST-b7f7fa] The invite flow should be fast and easy for invitees",
+    "labels": [
+      "epic"
+    ]
+  },
+  {
+    "title": "[EP-2f8b9d] Managing invites",
+    "body": "Requirements under \"Team Invites > Requirements > Managing invites\".\n\n### Stories\n- [ ] [ST-51ea02] View all pending invites with sender, role and sent date\n- [ ] [ST-b39715] Revoke a pending invite\n- [ ] [ST-55acad] Record an audit log entry for every invite sent, accepted, resent or revoked",
+    "labels": [
+      "epic"
+    ]
+  },
+  {
+    "title": "[EP-ea441d] Team Invites: non-functional requirements",
+    "body": "Requirements under \"Team Invites > Non-functional requirements\".\n\n### Stories\n- [ ] [ST-9b69c7] Invite emails must be sent through the existing transactional email provider\n- [ ] [ST-03f995] Rate-limit invites to 200 per workspace per day\n- [ ] [ST-c74591] Invite tokens must be single-use and at least 128 bits of entropy",
+    "labels": [
+      "epic"
+    ]
+  },
+  {
+    "title": "[ST-456a6d] Invite teammates by entering one or more email addresses",
+    "body": "As a workspace admin, I want to invite teammates by entering one or more email addresses, so that it supports the goal \"Let workspace owners add their team without contacting support\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** an admin submits up to 20 valid addresses, **then** each address receives an invite email within 2 minutes\n- [ ] **Given** a workspace admin, **when** an address is malformed, **then** the form shows an inline error and no invite is sent for it\n- [ ] **Given** a workspace admin, **when** the address already belongs to a member, **then** the admin sees \"already a member\"\n\n### Traceability\n- REQ-456a6d (examples/team-invites.md:27): Workspace admins can invite teammates by entering one or more email addresses.\n\n### Estimate\n5 points. base 1; +2 for 3 acceptance criteria; +1 measurable performance target (within 2 minutes) = score 4 -> 5 pts\n\nEpic: EP-2f525c",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-b5ddb7] Set the role (Admin or Member) for each invite",
+    "body": "As a workspace admin, I want to set the role (Admin or Member) for each invite, so that it supports the goal \"Keep workspace membership auditable for security reviews\".\n\n### Acceptance criteria\n- [ ] **Given** a role is selected, **when** the invite is accepted, **then** the new member has that role\n\n### Traceability\n- REQ-b5ddb7 (examples/team-invites.md:31): Workspace admins can set the role (Admin or Member) for each invite.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\nEpic: EP-2f525c",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-cb792f] Resend a pending invite",
+    "body": "As a workspace admin, I want to resend a pending invite, so that it supports the goal \"Keep workspace membership auditable for security reviews\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** the workspace admin resends a pending invite, **then** resending generates a new link and invalidates the previous one\n\n### Traceability\n- REQ-cb792f (examples/team-invites.md:33): Workspace admins can resend a pending invite.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-2f525c",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-c1b247] Accept an invite from the email link and join the workspace",
+    "body": "As an invitee, I want to accept an invite from the email link and join the workspace, so that it supports the goal \"Let workspace owners add their team without contacting support\".\n\n### Acceptance criteria\n- [ ] **Given** an invitee, **when** an invitee with an existing account opens a valid link, **then** they join the workspace after one confirmation click\n- [ ] **Given** an invitee, **when** an invitee without an account opens a valid link, **then** they are taken to sign-up with the email prefilled\n\n### Traceability\n- REQ-c1b247 (examples/team-invites.md:38): Invitees can accept an invite from the email link and join the workspace.\n\n### Estimate\n2 points. base 1; +1 for 2 acceptance criteria = score 2 -> 2 pts\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-8bb632",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-2ab69f] Invite links must expire after 7 days",
+    "body": "As a workspace admin, I want invite links to expire after 7 days, so that it supports the goal \"Let workspace owners add their team without contacting support\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** an invitee opens an expired link, **then** they see an expiry message and a button to request a new invite\n\n### Traceability\n- REQ-2ab69f (examples/team-invites.md:41): Invite links must expire after 7 days.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-8bb632",
+    "labels": [
+      "story",
+      "priority:must",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-b7f7fa] The invite flow should be fast and easy for invitees",
+    "body": "As an invitee, I want the invite flow to be fast and easy for invitees, so that it supports the goal \"Let workspace owners add their team without contacting support\".\n\n### Acceptance criteria\n- [ ] **Given** an invitee, **when** the behaviour is exercised, **then** the invite flow should be fast and easy for invitees\n\n### Traceability\n- REQ-b7f7fa (examples/team-invites.md:43): The invite flow should be fast and easy for invitees.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-8bb632",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-51ea02] View all pending invites with sender, role and sent date",
+    "body": "As a workspace admin, I want to view all pending invites with sender, role and sent date, so that it supports the goal \"Keep workspace membership auditable for security reviews\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** the workspace admin views all pending invites with sender, role and sent date, **then** workspace admins can view all pending invites with sender, role and sent date\n\n### Traceability\n- REQ-51ea02 (examples/team-invites.md:47): Workspace admins can view all pending invites with sender, role and sent date.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-2f8b9d",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-b39715] Revoke a pending invite",
+    "body": "As a workspace admin, I want to revoke a pending invite, so that it supports the goal \"Keep workspace membership auditable for security reviews\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** an admin revokes an invite, **then** its link stops working immediately\n\n### Traceability\n- REQ-b39715 (examples/team-invites.md:48): Workspace admins can revoke a pending invite.\n\n### Estimate\n1 points. base 1 = score 1 -> 1 pt\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-2f8b9d",
+    "labels": [
+      "story",
+      "priority:should",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-55acad] Record an audit log entry for every invite sent, accepted, resent or revoked",
+    "body": "As a workspace admin, I want the system to record an audit log entry for every invite sent, accepted, resent or revoked, so that it supports the goal \"Let workspace owners add their team without contacting support\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** the system records an audit log entry for every invite sent, accepted, resent or revoked, **then** each entry includes actor, target email, action and timestamp in UTC\n\n### Traceability\n- REQ-55acad (examples/team-invites.md:50): The system must record an audit log entry for every invite sent, accepted, resent or revoked.\n\n### Estimate\n2 points. base 1; +1 security or compliance (audit) = score 2 -> 2 pts\n\nEpic: EP-2f8b9d",
+    "labels": [
+      "story",
+      "priority:must",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-9b69c7] Invite emails must be sent through the existing transactional email provider",
+    "body": "As a workspace admin, I want invite emails to be sent through the existing transactional email provider, so that it supports the goal \"Let workspace owners add their team without contacting support\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** the behaviour is exercised, **then** invite emails must be sent through the existing transactional email provider\n\n### Traceability\n- REQ-9b69c7 (examples/team-invites.md:55): Invite emails must be sent through the existing transactional email provider.\n\n### Estimate\n3 points. base 1; +2 external integration (email provider) = score 3 -> 3 pts\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-ea441d",
+    "labels": [
+      "story",
+      "priority:must",
+      "non-functional",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-03f995] Rate-limit invites to 200 per workspace per day",
+    "body": "As a workspace admin, I want the system to rate-limit invites to 200 per workspace per day, so that it supports the goal \"Reduce time from workspace creation to first collaborator joining to under 1 day\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** the system rate-limits invites to 200 per workspace per day, **then** the system must rate-limit invites to 200 per workspace per day\n\n### Traceability\n- REQ-03f995 (examples/team-invites.md:56): The system must rate-limit invites to 200 per workspace per day.\n\n### Estimate\n3 points. base 1; +2 distributed-state complexity (rate-limit) = score 3 -> 3 pts\n\nEpic: EP-ea441d",
+    "labels": [
+      "story",
+      "priority:must",
+      "non-functional",
+      "benefit-inferred"
+    ]
+  },
+  {
+    "title": "[ST-c74591] Invite tokens must be single-use and at least 128 bits of entropy",
+    "body": "As a workspace admin, I want invite tokens to be single-use and at least 128 bits of entropy, so that it supports the goal \"Let workspace owners add their team without contacting support\".\n\n### Acceptance criteria\n- [ ] **Given** a workspace admin, **when** the behaviour is exercised, **then** invite tokens must be single-use and at least 128 bits of entropy\n\n### Traceability\n- REQ-c74591 (examples/team-invites.md:57): Invite tokens must be single-use and at least 128 bits of entropy.\n\n### Estimate\n2 points. base 1; +1 security or compliance (tokens, entropy) = score 2 -> 2 pts\n\n### Blocked by\n- [ST-456a6d] Invite teammates by entering one or more email addresses\n\nEpic: EP-ea441d",
+    "labels": [
+      "story",
+      "priority:must",
+      "non-functional",
+      "benefit-inferred"
+    ]
+  }
+]

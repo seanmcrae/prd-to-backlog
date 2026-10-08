@@ -1,0 +1,1275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>prd-to-backlog: traceable backlogs from markdown PRDs</title>
+<meta name="description" content="Turn a markdown PRD into epics, user stories, acceptance criteria, estimates and dependencies that trace back to PRD lines, with a quality linter and Jira, Linear and GitHub exports.">
+<style>
+:root{--fg:#111827;--muted:#4b5563;--line:#e5e7eb;--bg:#fff;--soft:#f8fafc;--accent:#1d4ed8;--hl:#fef9c3;--code:#f1f5f9}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+a{color:var(--accent)}code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+code{background:var(--code);padding:.1em .3em;border-radius:4px}pre code{background:none;padding:0}
+pre{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+nav.top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;gap:20px;align-items:center;height:52px;overflow-x:auto;white-space:nowrap}
+nav.top a{color:var(--fg);text-decoration:none;font-size:.92rem}nav.top a.brand{font-weight:700;margin-right:auto}
+.hero{background:linear-gradient(180deg,#f8fafc,#fff);border-bottom:1px solid var(--line);padding:48px 0 40px}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
+.eyebrow{color:var(--muted);font-size:.85rem;margin:0}
+h1{font-size:2.3rem;line-height:1.2;margin:.3em 0 .4em;letter-spacing:-.01em}
+.lede{color:#374151;font-size:1.05rem}
+.kpis{list-style:none;padding:0;display:flex;gap:22px;margin:22px 0 6px;flex-wrap:wrap}
+.kpis strong{display:block;font-size:1.7rem;line-height:1.1}.kpis span{color:var(--muted);font-size:.85rem}
+.fine{color:var(--muted);font-size:.85rem}
+.button{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;padding:9px 16px;border-radius:8px;font-weight:600;margin:4px 8px 4px 0}
+.button.ghost{background:none;color:var(--accent);border:1px solid var(--accent)}
+.chart{margin:0}.chart svg,.graph svg{max-width:100%;height:auto;display:block}
+.chart svg{border:1px solid var(--line);border-radius:10px}
+section{padding:36px 0 8px}h2{font-size:1.6rem;margin:0 0 .5em}h3{margin:1.6em 0 .5em}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}th{background:var(--soft)}
+table.num td:not(:first-child){text-align:right}td code{white-space:nowrap}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-top:18px;flex-wrap:wrap}
+.tabs button{font:inherit;border:1px solid var(--line);border-bottom:none;background:var(--soft);padding:8px 14px;border-radius:8px 8px 0 0;cursor:pointer}
+.tabs button[aria-selected=true]{background:#fff;font-weight:600;position:relative;top:1px}
+.summary{margin:14px 0}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.colhead{margin:.4em 0;font-size:1rem}.colhead span{color:var(--muted);font-weight:400;font-size:.85rem;margin-left:6px}
+.prd,.backlog{height:min(74vh,780px);min-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin:0}
+.prd{padding:8px 0;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.ln{display:block;padding:0 12px 0 52px;text-indent:-40px;scroll-margin-top:30vh}
+.ln .no{display:inline-block;width:32px;margin-right:8px;text-align:right;color:#9ca3af;text-decoration:none;text-indent:0;user-select:none}
+.ln.req{cursor:pointer;border-left:3px solid #c7d2fe}.ln.req:hover{background:#eef2ff}
+.ln.hl{background:var(--hl);border-left-color:#ca8a04}
+.backlog{padding:4px 12px;background:var(--soft)}
+.epic h3{font-size:.95rem;margin:14px 0 8px}.epic:first-child h3{margin-top:8px}
+.story{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 10px;scroll-margin-top:12px;outline:none}
+.story.hl,.story:focus{border-color:#ca8a04;box-shadow:0 0 0 3px #fde68a}
+.story header{display:flex;gap:6px;align-items:center}.story h4{margin:6px 0 4px;font-size:1rem}
+.story p{margin:4px 0;font-size:.92rem}
+.pill{font-size:.75rem;border:1px solid var(--line);border-radius:99px;padding:0 8px;color:var(--muted)}
+.p-must{border-color:#fca5a5;color:#b91c1c}.p-should{border-color:#fcd34d;color:#92400e}.p-could{border-color:#a7f3d0;color:#047857}
+.criteria{margin:6px 0;padding-left:20px;font-size:.9rem}.criteria li.inferred{font-style:italic;color:var(--muted)}
+.meta{color:var(--muted)}.finding{color:#92400e;background:#fffbeb;border-radius:6px;padding:2px 8px}
+.graph{overflow-x:auto;border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}
+.legend{font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:14px}
+.legend i{display:inline-block;width:12px;height:12px;border:1px solid #94a3b8;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.prose{max-width:860px}.arch{display:grid;grid-template-columns:auto minmax(0,1fr);gap:32px;align-items:start}.arch figure{margin:0;position:sticky;top:64px}.arch h3{margin-top:0}figcaption{padding:4px 8px}.product table{font-size:.86rem}
+footer{border-top:1px solid var(--line);margin-top:40px;padding:24px 0;color:var(--muted);font-size:.88rem}
+@media (max-width:900px){.hero-grid,.split,.arch{grid-template-columns:1fr}.arch figure{position:static}h1{font-size:1.8rem}.prd,.backlog{height:56vh}}
+</style>
+</head>
+<body>
+<nav class="top"><div class="wrap"><a class="brand" href="#top">prd-to-backlog</a><a href="#sample">Sample</a><a href="#results">Results</a><a href="#quickstart">Quickstart</a><a href="#architecture">Architecture</a><a href="#product">Product brief</a><a href="#limitations">Limitations</a><a href="https://github.com/seanmcrae/prd-to-backlog">GitHub</a></div></nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">prd-to-backlog v0.1.0 &middot; TypeScript CLI and HTTP API</p>
+      <h1>Turn a markdown PRD into a backlog you can trace back to every line.</h1>
+      <p class="lede">Epics, user stories, Given/When/Then acceptance criteria, estimates, dependencies and risks, each citing the PRD lines it came from. A linter scores the result, and exporters write GitHub Issues, Jira CSV and Linear CSV. The default generator is deterministic and runs offline; Anthropic and OpenAI adapters are optional.</p>
+      <ul class="kpis">
+        <li><strong>100%</strong><span>requirements traced to a story</span></li>
+        <li><strong>33/33</strong><span>labelled requirements extracted</span></li>
+        <li><strong>94-97</strong><span>lint score out of 100</span></li>
+      </ul>
+      <p class="fine">Measured with <code>npm run eval</code> on the 3 bundled synthetic PRDs, heuristic generator, no API keys.</p>
+      <p class="cta"><a class="button" href="#sample">See a PRD next to its backlog</a> <a class="button ghost" href="https://github.com/seanmcrae/prd-to-backlog">View on GitHub</a></p>
+    </div>
+    <figure class="chart"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 414" width="760" height="414" role="img" aria-label="Heuristic generator on the bundled synthetic PRDs" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<rect width="760" height="414" fill="#ffffff"/>
+<text x="24" y="32" font-size="18" font-weight="600" fill="#111827">Heuristic generator on the bundled synthetic PRDs</text>
+<text x="24" y="54" font-size="13" fill="#4b5563">npm run eval, no API keys. Percentages, lint score out of 100.</text>
+<line x1="190" y1="72" x2="190" y2="356" stroke="#e5e7eb"/>
+<text x="190" y="372" font-size="11" fill="#6b7280" text-anchor="middle">0</text>
+<line x1="318.5" y1="72" x2="318.5" y2="356" stroke="#e5e7eb"/>
+<text x="318.5" y="372" font-size="11" fill="#6b7280" text-anchor="middle">25</text>
+<line x1="447" y1="72" x2="447" y2="356" stroke="#e5e7eb"/>
+<text x="447" y="372" font-size="11" fill="#6b7280" text-anchor="middle">50</text>
+<line x1="575.5" y1="72" x2="575.5" y2="356" stroke="#e5e7eb"/>
+<text x="575.5" y="372" font-size="11" fill="#6b7280" text-anchor="middle">75</text>
+<line x1="704" y1="72" x2="704" y2="356" stroke="#e5e7eb"/>
+<text x="704" y="372" font-size="11" fill="#6b7280" text-anchor="middle">100</text>
+<text x="178" y="120" font-size="13" fill="#111827" text-anchor="end">Team Invites</text>
+<rect x="190" y="78" width="514" height="16" rx="2" fill="#1d4ed8"><title>Team Invites: Extraction recall 100</title></rect>
+<text x="710" y="90" font-size="11" fill="#374151">100</text>
+<rect x="190" y="98" width="514" height="16" rx="2" fill="#0f766e"><title>Team Invites: Capability coverage 100</title></rect>
+<text x="710" y="110" font-size="11" fill="#374151">100</text>
+<rect x="190" y="118" width="514" height="16" rx="2" fill="#7c3aed"><title>Team Invites: Traceability 100</title></rect>
+<text x="710" y="130" font-size="11" fill="#374151">100</text>
+<rect x="190" y="138" width="498.5799999999999" height="16" rx="2" fill="#b45309"><title>Team Invites: Lint score 97</title></rect>
+<text x="694.5799999999999" y="150" font-size="11" fill="#374151">97</text>
+<text x="178" y="210.5" font-size="13" fill="#111827" text-anchor="end">Offline Mode for the</text>
+<text x="178" y="225.5" font-size="13" fill="#111827" text-anchor="end">Field Inspections App</text>
+<rect x="190" y="176" width="514" height="16" rx="2" fill="#1d4ed8"><title>Offline Mode for the Field Inspections App: Extraction recall 100</title></rect>
+<text x="710" y="188" font-size="11" fill="#374151">100</text>
+<rect x="190" y="196" width="472.88" height="16" rx="2" fill="#0f766e"><title>Offline Mode for the Field Inspections App: Capability coverage 92</title></rect>
+<text x="668.88" y="208" font-size="11" fill="#374151">92</text>
+<rect x="190" y="216" width="514" height="16" rx="2" fill="#7c3aed"><title>Offline Mode for the Field Inspections App: Traceability 100</title></rect>
+<text x="710" y="228" font-size="11" fill="#374151">100</text>
+<rect x="190" y="236" width="483.15999999999997" height="16" rx="2" fill="#b45309"><title>Offline Mode for the Field Inspections App: Lint score 94</title></rect>
+<text x="679.16" y="248" font-size="11" fill="#374151">94</text>
+<text x="178" y="316" font-size="13" fill="#111827" text-anchor="end">Usage-Based Billing</text>
+<rect x="190" y="274" width="514" height="16" rx="2" fill="#1d4ed8"><title>Usage-Based Billing: Extraction recall 100</title></rect>
+<text x="710" y="286" font-size="11" fill="#374151">100</text>
+<rect x="190" y="294" width="514" height="16" rx="2" fill="#0f766e"><title>Usage-Based Billing: Capability coverage 100</title></rect>
+<text x="710" y="306" font-size="11" fill="#374151">100</text>
+<rect x="190" y="314" width="514" height="16" rx="2" fill="#7c3aed"><title>Usage-Based Billing: Traceability 100</title></rect>
+<text x="710" y="326" font-size="11" fill="#374151">100</text>
+<rect x="190" y="334" width="493.44000000000005" height="16" rx="2" fill="#b45309"><title>Usage-Based Billing: Lint score 96</title></rect>
+<text x="689.44" y="346" font-size="11" fill="#374151">96</text>
+<rect x="190" y="384" width="12" height="12" rx="2" fill="#1d4ed8"/>
+<text x="208" y="394" font-size="12" fill="#374151">Extraction recall</text>
+<rect x="339" y="384" width="12" height="12" rx="2" fill="#0f766e"/>
+<text x="357" y="394" font-size="12" fill="#374151">Capability coverage</text>
+<rect x="502" y="384" width="12" height="12" rx="2" fill="#7c3aed"/>
+<text x="520" y="394" font-size="12" fill="#374151">Traceability</text>
+<rect x="616" y="384" width="12" height="12" rx="2" fill="#b45309"/>
+<text x="634" y="394" font-size="12" fill="#374151">Lint score</text>
+</svg>
+</figure>
+  </div>
+</header>
+<main>
+
+<section id="sample" class="wrap">
+  <h2>A PRD next to its generated backlog</h2>
+  <p>Hover or focus a story to highlight the PRD lines it came from; click a highlighted PRD line to jump to its story. Criteria in italics were inferred because the PRD gave no testable detail, and the linter flags them for review. Everything below is generated from the PRD on the left by <code>npm run site</code>.</p>
+  <div class="tabs" role="tablist"><button role="tab" id="tab-team-invites" aria-controls="panel-team-invites" aria-selected="true">Team Invites</button><button role="tab" id="tab-mobile-offline-mode" aria-controls="panel-mobile-offline-mode" aria-selected="false">Offline Mode for the Field Inspections App</button><button role="tab" id="tab-usage-based-billing" aria-controls="panel-usage-based-billing" aria-selected="false">Usage-Based Billing</button></div>
+  
+<div class="panel" id="panel-team-invites" role="tabpanel" aria-labelledby="tab-team-invites">
+  <p class="summary"><b>4</b> epics &middot; <b>12</b> stories &middot; <b>23</b> pts &middot; <b>8</b> dependencies &middot; <b>3</b> risks &middot; lint <b>97/100 (A)</b> &middot; traceability <b>100%</b> &middot; 7 warnings</p>
+  <div class="split">
+    <div class="col"><h3 class="colhead">PRD <span>examples/team-invites.md (synthetic)</span></h3><pre class="prd" data-pane><span id="team-invites-L1" class="ln"><a class="no" href="#team-invites-L1">1</a># Team Invites</span><span id="team-invites-L2" class="ln"><a class="no" href="#team-invites-L2">2</a> </span><span id="team-invites-L3" class="ln"><a class="no" href="#team-invites-L3">3</a>&gt; SYNTHETIC sample PRD written for prd-to-backlog demos and evals. It does not describe a real</span><span id="team-invites-L4" class="ln"><a class="no" href="#team-invites-L4">4</a>&gt; product or company.</span><span id="team-invites-L5" class="ln"><a class="no" href="#team-invites-L5">5</a> </span><span id="team-invites-L6" class="ln"><a class="no" href="#team-invites-L6">6</a>## Problem</span><span id="team-invites-L7" class="ln"><a class="no" href="#team-invites-L7">7</a> </span><span id="team-invites-L8" class="ln"><a class="no" href="#team-invites-L8">8</a>New workspaces stall after sign-up because the creator cannot easily bring teammates in.</span><span id="team-invites-L9" class="ln"><a class="no" href="#team-invites-L9">9</a>Today invites are sent manually by support, which takes up to two business days.</span><span id="team-invites-L10" class="ln"><a class="no" href="#team-invites-L10">10</a> </span><span id="team-invites-L11" class="ln"><a class="no" href="#team-invites-L11">11</a>## Goals</span><span id="team-invites-L12" class="ln"><a class="no" href="#team-invites-L12">12</a> </span><span id="team-invites-L13" class="ln"><a class="no" href="#team-invites-L13">13</a>- Let workspace owners add their team without contacting support.</span><span id="team-invites-L14" class="ln"><a class="no" href="#team-invites-L14">14</a>- Reduce time from workspace creation to first collaborator joining to under 1 day.</span><span id="team-invites-L15" class="ln"><a class="no" href="#team-invites-L15">15</a>- Keep workspace membership auditable for security reviews.</span><span id="team-invites-L16" class="ln"><a class="no" href="#team-invites-L16">16</a> </span><span id="team-invites-L17" class="ln"><a class="no" href="#team-invites-L17">17</a>## Users</span><span id="team-invites-L18" class="ln"><a class="no" href="#team-invites-L18">18</a> </span><span id="team-invites-L19" class="ln"><a class="no" href="#team-invites-L19">19</a>- **Workspace admin**: owns the workspace, manages members and billing seats.</span><span id="team-invites-L20" class="ln"><a class="no" href="#team-invites-L20">20</a>- **Invitee**: a teammate who receives an invite and may not have an account yet.</span><span id="team-invites-L21" class="ln"><a class="no" href="#team-invites-L21">21</a>- **Security reviewer**: audits who was granted access and when.</span><span id="team-invites-L22" class="ln"><a class="no" href="#team-invites-L22">22</a> </span><span id="team-invites-L23" class="ln"><a class="no" href="#team-invites-L23">23</a>## Requirements</span><span id="team-invites-L24" class="ln"><a class="no" href="#team-invites-L24">24</a> </span><span id="team-invites-L25" class="ln"><a class="no" href="#team-invites-L25">25</a>### Sending invites</span><span id="team-invites-L26" class="ln"><a class="no" href="#team-invites-L26">26</a> </span><span id="team-invites-L27" data-story="team-invites-ST-456a6d" class="ln req"><a class="no" href="#team-invites-L27">27</a>- Workspace admins can invite teammates by entering one or more email addresses.</span><span id="team-invites-L28" data-story="team-invites-ST-456a6d" class="ln req"><a class="no" href="#team-invites-L28">28</a>  - When an admin submits up to 20 valid addresses, then each address receives an invite email within 2 minutes.</span><span id="team-invites-L29" data-story="team-invites-ST-456a6d" class="ln req"><a class="no" href="#team-invites-L29">29</a>  - If an address is malformed, then the form shows an inline error and no invite is sent for it.</span><span id="team-invites-L30" data-story="team-invites-ST-456a6d" class="ln req"><a class="no" href="#team-invites-L30">30</a>  - If the address already belongs to a member, then the admin sees &quot;already a member&quot;.</span><span id="team-invites-L31" data-story="team-invites-ST-b5ddb7" class="ln req"><a class="no" href="#team-invites-L31">31</a>- Workspace admins can set the role (Admin or Member) for each invite.</span><span id="team-invites-L32" data-story="team-invites-ST-b5ddb7" class="ln req"><a class="no" href="#team-invites-L32">32</a>  - Given a role is selected, when the invite is accepted, then the new member has that role.</span><span id="team-invites-L33" data-story="team-invites-ST-cb792f" class="ln req"><a class="no" href="#team-invites-L33">33</a>- Workspace admins can resend a pending invite.</span><span id="team-invites-L34" data-story="team-invites-ST-cb792f" class="ln req"><a class="no" href="#team-invites-L34">34</a>  - Resending generates a new link and invalidates the previous one.</span><span id="team-invites-L35" class="ln"><a class="no" href="#team-invites-L35">35</a> </span><span id="team-invites-L36" class="ln"><a class="no" href="#team-invites-L36">36</a>### Accepting invites</span><span id="team-invites-L37" class="ln"><a class="no" href="#team-invites-L37">37</a> </span><span id="team-invites-L38" data-story="team-invites-ST-c1b247" class="ln req"><a class="no" href="#team-invites-L38">38</a>- Invitees can accept an invite from the email link and join the workspace.</span><span id="team-invites-L39" data-story="team-invites-ST-c1b247" class="ln req"><a class="no" href="#team-invites-L39">39</a>  - When an invitee with an existing account opens a valid link, then they join the workspace after one confirmation click.</span><span id="team-invites-L40" data-story="team-invites-ST-c1b247" class="ln req"><a class="no" href="#team-invites-L40">40</a>  - When an invitee without an account opens a valid link, then they are taken to sign-up with the email prefilled.</span><span id="team-invites-L41" data-story="team-invites-ST-2ab69f" class="ln req"><a class="no" href="#team-invites-L41">41</a>- Invite links must expire after 7 days.</span><span id="team-invites-L42" data-story="team-invites-ST-2ab69f" class="ln req"><a class="no" href="#team-invites-L42">42</a>  - If an invitee opens an expired link, then they see an expiry message and a button to request a new invite.</span><span id="team-invites-L43" data-story="team-invites-ST-b7f7fa" class="ln req"><a class="no" href="#team-invites-L43">43</a>- The invite flow should be fast and easy for invitees.</span><span id="team-invites-L44" class="ln"><a class="no" href="#team-invites-L44">44</a> </span><span id="team-invites-L45" class="ln"><a class="no" href="#team-invites-L45">45</a>### Managing invites</span><span id="team-invites-L46" class="ln"><a class="no" href="#team-invites-L46">46</a> </span><span id="team-invites-L47" data-story="team-invites-ST-51ea02" class="ln req"><a class="no" href="#team-invites-L47">47</a>- Workspace admins can view all pending invites with sender, role and sent date.</span><span id="team-invites-L48" data-story="team-invites-ST-b39715" class="ln req"><a class="no" href="#team-invites-L48">48</a>- Workspace admins can revoke a pending invite.</span><span id="team-invites-L49" data-story="team-invites-ST-b39715" class="ln req"><a class="no" href="#team-invites-L49">49</a>  - When an admin revokes an invite, then its link stops working immediately.</span><span id="team-invites-L50" data-story="team-invites-ST-55acad" class="ln req"><a class="no" href="#team-invites-L50">50</a>- The system must record an audit log entry for every invite sent, accepted, resent or revoked.</span><span id="team-invites-L51" data-story="team-invites-ST-55acad" class="ln req"><a class="no" href="#team-invites-L51">51</a>  - Each entry includes actor, target email, action and timestamp in UTC.</span><span id="team-invites-L52" class="ln"><a class="no" href="#team-invites-L52">52</a> </span><span id="team-invites-L53" class="ln"><a class="no" href="#team-invites-L53">53</a>## Non-functional requirements</span><span id="team-invites-L54" class="ln"><a class="no" href="#team-invites-L54">54</a> </span><span id="team-invites-L55" data-story="team-invites-ST-9b69c7" class="ln req"><a class="no" href="#team-invites-L55">55</a>- Invite emails must be sent through the existing transactional email provider.</span><span id="team-invites-L56" data-story="team-invites-ST-03f995" class="ln req"><a class="no" href="#team-invites-L56">56</a>- The system must rate-limit invites to 200 per workspace per day.</span><span id="team-invites-L57" data-story="team-invites-ST-c74591" class="ln req"><a class="no" href="#team-invites-L57">57</a>- Invite tokens must be single-use and at least 128 bits of entropy.</span><span id="team-invites-L58" class="ln"><a class="no" href="#team-invites-L58">58</a> </span><span id="team-invites-L59" class="ln"><a class="no" href="#team-invites-L59">59</a>## Out of scope</span><span id="team-invites-L60" class="ln"><a class="no" href="#team-invites-L60">60</a> </span><span id="team-invites-L61" class="ln"><a class="no" href="#team-invites-L61">61</a>- Inviting users via SCIM or directory sync.</span><span id="team-invites-L62" class="ln"><a class="no" href="#team-invites-L62">62</a>- Bulk CSV upload of invitees.</span><span id="team-invites-L63" class="ln"><a class="no" href="#team-invites-L63">63</a>- Custom invite email branding.</span><span id="team-invites-L64" class="ln"><a class="no" href="#team-invites-L64">64</a> </span><span id="team-invites-L65" class="ln"><a class="no" href="#team-invites-L65">65</a>## Risks</span><span id="team-invites-L66" class="ln"><a class="no" href="#team-invites-L66">66</a> </span><span id="team-invites-L67" class="ln"><a class="no" href="#team-invites-L67">67</a>- Invite emails may land in spam folders, lowering acceptance rate.</span><span id="team-invites-L68" class="ln"><a class="no" href="#team-invites-L68">68</a>- Rate limits that are too strict could block legitimate onboarding for large teams.</span><span id="team-invites-L69" class="ln"><a class="no" href="#team-invites-L69">69</a> </span><span id="team-invites-L70" class="ln"><a class="no" href="#team-invites-L70">70</a>## Open questions</span><span id="team-invites-L71" class="ln"><a class="no" href="#team-invites-L71">71</a> </span><span id="team-invites-L72" class="ln"><a class="no" href="#team-invites-L72">72</a>- Should Members (not only Admins) be allowed to send invites?</span></pre></div>
+    <div class="col"><h3 class="colhead">Generated backlog <span>heuristic generator</span></h3><div class="backlog" data-pane><div class="epic"><h3><code>EP-2f525c</code> Sending invites</h3>
+<article class="story" id="team-invites-ST-456a6d" data-lines="27-30" tabindex="0">
+  <header><code>ST-456a6d</code><span class="pill p-should">should</span><span class="pill">5 pts</span></header>
+  <h4>Invite teammates by entering one or more email addresses</h4>
+  <p>As a workspace admin, I want to invite teammates by entering one or more email addresses, so that it supports the goal &quot;Let workspace owners add their team without contacting support&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a workspace admin, <b>when</b> an admin submits up to 20 valid addresses, <b>then</b> each address receives an invite email within 2 minutes.</li><li><b>Given</b> a workspace admin, <b>when</b> an address is malformed, <b>then</b> the form shows an inline error and no invite is sent for it.</li><li><b>Given</b> a workspace admin, <b>when</b> the address already belongs to a member, <b>then</b> the admin sees &quot;already a member&quot;.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L27" data-lines="27-30">examples/team-invites.md:27-30</a></p>
+  
+</article>
+<article class="story" id="team-invites-ST-b5ddb7" data-lines="31-32" tabindex="0">
+  <header><code>ST-b5ddb7</code><span class="pill p-should">should</span><span class="pill">1 pt</span></header>
+  <h4>Set the role (Admin or Member) for each invite</h4>
+  <p>As a workspace admin, I want to set the role (Admin or Member) for each invite, so that it supports the goal &quot;Keep workspace membership auditable for security reviews&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a role is selected, <b>when</b> the invite is accepted, <b>then</b> the new member has that role.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L31" data-lines="31-32">examples/team-invites.md:31-32</a></p>
+  
+</article>
+<article class="story" id="team-invites-ST-cb792f" data-lines="33-34" tabindex="0">
+  <header><code>ST-cb792f</code><span class="pill p-should">should</span><span class="pill">1 pt</span></header>
+  <h4>Resend a pending invite</h4>
+  <p>As a workspace admin, I want to resend a pending invite, so that it supports the goal &quot;Keep workspace membership auditable for security reviews&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a workspace admin, <b>when</b> the workspace admin resends a pending invite, <b>then</b> resending generates a new link and invalidates the previous one.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L33" data-lines="33-34">examples/team-invites.md:33-34</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  
+</article></div><div class="epic"><h3><code>EP-8bb632</code> Accepting invites</h3>
+<article class="story" id="team-invites-ST-c1b247" data-lines="38-40" tabindex="0">
+  <header><code>ST-c1b247</code><span class="pill p-should">should</span><span class="pill">2 pts</span></header>
+  <h4>Accept an invite from the email link and join the workspace</h4>
+  <p>As an invitee, I want to accept an invite from the email link and join the workspace, so that it supports the goal &quot;Let workspace owners add their team without contacting support&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> an invitee, <b>when</b> an invitee with an existing account opens a valid link, <b>then</b> they join the workspace after one confirmation click.</li><li><b>Given</b> an invitee, <b>when</b> an invitee without an account opens a valid link, <b>then</b> they are taken to sign-up with the email prefilled.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L38" data-lines="38-40">examples/team-invites.md:38-40</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  
+</article>
+<article class="story" id="team-invites-ST-2ab69f" data-lines="41-42" tabindex="0">
+  <header><code>ST-2ab69f</code><span class="pill p-must">must</span><span class="pill">1 pt</span></header>
+  <h4>Invite links must expire after 7 days</h4>
+  <p>As a workspace admin, I want invite links to expire after 7 days, so that it supports the goal &quot;Let workspace owners add their team without contacting support&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a workspace admin, <b>when</b> an invitee opens an expired link, <b>then</b> they see an expiry message and a button to request a new invite.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L41" data-lines="41-42">examples/team-invites.md:41-42</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  
+</article>
+<article class="story" id="team-invites-ST-b7f7fa" data-lines="43-43" tabindex="0">
+  <header><code>ST-b7f7fa</code><span class="pill p-should">should</span><span class="pill">1 pt</span></header>
+  <h4>The invite flow should be fast and easy for invitees</h4>
+  <p>As an invitee, I want the invite flow to be fast and easy for invitees, so that it supports the goal &quot;Let workspace owners add their team without contacting support&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> an invitee, <b>when</b> the behaviour is exercised, <b>then</b> the invite flow should be fast and easy for invitees.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L43" data-lines="43-43">examples/team-invites.md:43</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  <p class="finding">untestable-criterion: Then-clause uses subjective terms (fast, easy): &quot;the invite flow should be fast and easy for invitees&quot;. State a measurable or visible result.</p><p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p><p class="finding">vague-language: Vague wording: &quot;fast&quot;, &quot;easy&quot;. Replace with a measurable target.</p>
+</article></div><div class="epic"><h3><code>EP-2f8b9d</code> Managing invites</h3>
+<article class="story" id="team-invites-ST-51ea02" data-lines="47-47" tabindex="0">
+  <header><code>ST-51ea02</code><span class="pill p-should">should</span><span class="pill">1 pt</span></header>
+  <h4>View all pending invites with sender, role and sent date</h4>
+  <p>As a workspace admin, I want to view all pending invites with sender, role and sent date, so that it supports the goal &quot;Keep workspace membership auditable for security reviews&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a workspace admin, <b>when</b> the workspace admin views all pending invites with sender, role and sent date, <b>then</b> workspace admins can view all pending invites with sender, role and sent date.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L47" data-lines="47-47">examples/team-invites.md:47</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="team-invites-ST-b39715" data-lines="48-49" tabindex="0">
+  <header><code>ST-b39715</code><span class="pill p-should">should</span><span class="pill">1 pt</span></header>
+  <h4>Revoke a pending invite</h4>
+  <p>As a workspace admin, I want to revoke a pending invite, so that it supports the goal &quot;Keep workspace membership auditable for security reviews&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a workspace admin, <b>when</b> an admin revokes an invite, <b>then</b> its link stops working immediately.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L48" data-lines="48-49">examples/team-invites.md:48-49</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  
+</article>
+<article class="story" id="team-invites-ST-55acad" data-lines="50-51" tabindex="0">
+  <header><code>ST-55acad</code><span class="pill p-must">must</span><span class="pill">2 pts</span></header>
+  <h4>Record an audit log entry for every invite sent, accepted, resent or revoked</h4>
+  <p>As a workspace admin, I want the system to record an audit log entry for every invite sent, accepted, resent or revoked, so that it supports the goal &quot;Let workspace owners add their team without contacting support&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a workspace admin, <b>when</b> the system records an audit log entry for every invite sent, accepted, resent or revoked, <b>then</b> each entry includes actor, target email, action and timestamp in UTC.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L50" data-lines="50-51">examples/team-invites.md:50-51</a></p>
+  
+</article></div><div class="epic"><h3><code>EP-ea441d</code> Team Invites: non-functional requirements</h3>
+<article class="story" id="team-invites-ST-9b69c7" data-lines="55-55" tabindex="0">
+  <header><code>ST-9b69c7</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Invite emails must be sent through the existing transactional email provider</h4>
+  <p>As a workspace admin, I want invite emails to be sent through the existing transactional email provider, so that it supports the goal &quot;Let workspace owners add their team without contacting support&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a workspace admin, <b>when</b> the behaviour is exercised, <b>then</b> invite emails must be sent through the existing transactional email provider.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L55" data-lines="55-55">examples/team-invites.md:55</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="team-invites-ST-03f995" data-lines="56-56" tabindex="0">
+  <header><code>ST-03f995</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Rate-limit invites to 200 per workspace per day</h4>
+  <p>As a workspace admin, I want the system to rate-limit invites to 200 per workspace per day, so that it supports the goal &quot;Reduce time from workspace creation to first collaborator joining to under 1 day&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a workspace admin, <b>when</b> the system rate-limits invites to 200 per workspace per day, <b>then</b> the system must rate-limit invites to 200 per workspace per day.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L56" data-lines="56-56">examples/team-invites.md:56</a></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="team-invites-ST-c74591" data-lines="57-57" tabindex="0">
+  <header><code>ST-c74591</code><span class="pill p-must">must</span><span class="pill">2 pts</span></header>
+  <h4>Invite tokens must be single-use and at least 128 bits of entropy</h4>
+  <p>As a workspace admin, I want invite tokens to be single-use and at least 128 bits of entropy, so that it supports the goal &quot;Let workspace owners add their team without contacting support&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a workspace admin, <b>when</b> the behaviour is exercised, <b>then</b> invite tokens must be single-use and at least 128 bits of entropy.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#team-invites-L57" data-lines="57-57">examples/team-invites.md:57</a> &middot; blocked by <code>ST-456a6d</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article></div></div></div>
+  </div>
+  <h3>Dependency graph</h3>
+  <div class="graph"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 708" width="496" height="708" role="img" aria-label="Story dependencies for Team Invites" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<defs><marker id="team-invites-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<path d="M216,222 C248,222 248,41 280,41" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<path d="M216,222 C248,222 248,124 280,124" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<path d="M216,222 C248,222 248,214.5 280,214.5" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<path d="M216,222 C248,222 248,297.5 280,297.5" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<path d="M216,222 C248,222 248,388 280,388" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<path d="M216,222 C248,222 248,471 280,471" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<path d="M216,222 C248,222 248,554 280,554" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<path d="M216,222 C248,222 248,652 280,652" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#team-invites-arrow)"/>
+<g><title>ST-456a6d (5)
+Invite teammates by entering one or more email addresses</title><rect x="16" y="189.5" width="200" height="65" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="211.5" font-size="12" fill="#111827" text-anchor="middle">ST-456a6d (5)</text>
+<text x="116" y="226.5" font-size="12" fill="#111827" text-anchor="middle">Invite teammates by entering</text>
+<text x="116" y="241.5" font-size="12" fill="#111827" text-anchor="middle">one or more email addresses</text>
+</g>
+<g><title>ST-b5ddb7 (1)
+Set the role (Admin or Member) for each invite</title><rect x="16" y="272.5" width="200" height="65" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="294.5" font-size="12" fill="#111827" text-anchor="middle">ST-b5ddb7 (1)</text>
+<text x="116" y="309.5" font-size="12" fill="#111827" text-anchor="middle">Set the role (Admin or</text>
+<text x="116" y="324.5" font-size="12" fill="#111827" text-anchor="middle">Member) for each invite</text>
+</g>
+<g><title>ST-cb792f (1)
+Resend a pending invite</title><rect x="280" y="16" width="200" height="50" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="380" y="38" font-size="12" fill="#111827" text-anchor="middle">ST-cb792f (1)</text>
+<text x="380" y="53" font-size="12" fill="#111827" text-anchor="middle">Resend a pending invite</text>
+</g>
+<g><title>ST-c1b247 (2)
+Accept an invite from the email link and join the workspace</title><rect x="280" y="84" width="200" height="80" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="380" y="106" font-size="12" fill="#111827" text-anchor="middle">ST-c1b247 (2)</text>
+<text x="380" y="121" font-size="12" fill="#111827" text-anchor="middle">Accept an invite from the</text>
+<text x="380" y="136" font-size="12" fill="#111827" text-anchor="middle">email link and join the</text>
+<text x="380" y="151" font-size="12" fill="#111827" text-anchor="middle">workspace</text>
+</g>
+<g><title>ST-2ab69f (1)
+Invite links must expire after 7 days</title><rect x="280" y="182" width="200" height="65" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="380" y="204" font-size="12" fill="#111827" text-anchor="middle">ST-2ab69f (1)</text>
+<text x="380" y="219" font-size="12" fill="#111827" text-anchor="middle">Invite links must expire</text>
+<text x="380" y="234" font-size="12" fill="#111827" text-anchor="middle">after 7 days</text>
+</g>
+<g><title>ST-b7f7fa (1)
+The invite flow should be fast and easy for invitees</title><rect x="280" y="265" width="200" height="65" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="380" y="287" font-size="12" fill="#111827" text-anchor="middle">ST-b7f7fa (1)</text>
+<text x="380" y="302" font-size="12" fill="#111827" text-anchor="middle">The invite flow should be</text>
+<text x="380" y="317" font-size="12" fill="#111827" text-anchor="middle">fast and easy for invitees</text>
+</g>
+<g><title>ST-51ea02 (1)
+View all pending invites with sender, role and sent date</title><rect x="280" y="348" width="200" height="80" rx="6" fill="#fef3c7" stroke="#94a3b8"/>
+<text x="380" y="370" font-size="12" fill="#111827" text-anchor="middle">ST-51ea02 (1)</text>
+<text x="380" y="385" font-size="12" fill="#111827" text-anchor="middle">View all pending invites</text>
+<text x="380" y="400" font-size="12" fill="#111827" text-anchor="middle">with sender, role and sent</text>
+<text x="380" y="415" font-size="12" fill="#111827" text-anchor="middle">date</text>
+</g>
+<g><title>ST-b39715 (1)
+Revoke a pending invite</title><rect x="280" y="446" width="200" height="50" rx="6" fill="#fef3c7" stroke="#94a3b8"/>
+<text x="380" y="468" font-size="12" fill="#111827" text-anchor="middle">ST-b39715 (1)</text>
+<text x="380" y="483" font-size="12" fill="#111827" text-anchor="middle">Revoke a pending invite</text>
+</g>
+<g><title>ST-55acad (2)
+Record an audit log entry for every invite sent, accepted, resent or revoked</title><rect x="16" y="355.5" width="200" height="80" rx="6" fill="#fef3c7" stroke="#94a3b8"/>
+<text x="116" y="377.5" font-size="12" fill="#111827" text-anchor="middle">ST-55acad (2)</text>
+<text x="116" y="392.5" font-size="12" fill="#111827" text-anchor="middle">Record an audit log entry</text>
+<text x="116" y="407.5" font-size="12" fill="#111827" text-anchor="middle">for every invite sent,</text>
+<text x="116" y="422.5" font-size="12" fill="#111827" text-anchor="middle">accepted, resent or revoked</text>
+</g>
+<g><title>ST-9b69c7 (3)
+Invite emails must be sent through the existing transactional email provider</title><rect x="280" y="514" width="200" height="80" rx="6" fill="#fce7f3" stroke="#94a3b8"/>
+<text x="380" y="536" font-size="12" fill="#111827" text-anchor="middle">ST-9b69c7 (3)</text>
+<text x="380" y="551" font-size="12" fill="#111827" text-anchor="middle">Invite emails must be sent</text>
+<text x="380" y="566" font-size="12" fill="#111827" text-anchor="middle">through the existing</text>
+<text x="380" y="581" font-size="12" fill="#111827" text-anchor="middle">transactional email provider</text>
+</g>
+<g><title>ST-03f995 (3)
+Rate-limit invites to 200 per workspace per day</title><rect x="16" y="453.5" width="200" height="65" rx="6" fill="#fce7f3" stroke="#94a3b8"/>
+<text x="116" y="475.5" font-size="12" fill="#111827" text-anchor="middle">ST-03f995 (3)</text>
+<text x="116" y="490.5" font-size="12" fill="#111827" text-anchor="middle">Rate-limit invites to 200</text>
+<text x="116" y="505.5" font-size="12" fill="#111827" text-anchor="middle">per workspace per day</text>
+</g>
+<g><title>ST-c74591 (2)
+Invite tokens must be single-use and at least 128 bits of entropy</title><rect x="280" y="612" width="200" height="80" rx="6" fill="#fce7f3" stroke="#94a3b8"/>
+<text x="380" y="634" font-size="12" fill="#111827" text-anchor="middle">ST-c74591 (2)</text>
+<text x="380" y="649" font-size="12" fill="#111827" text-anchor="middle">Invite tokens must be</text>
+<text x="380" y="664" font-size="12" fill="#111827" text-anchor="middle">single-use and at least 128</text>
+<text x="380" y="679" font-size="12" fill="#111827" text-anchor="middle">bits of entropy</text>
+</g>
+</svg>
+</div>
+<p class="legend"><span><i style="background:#dbeafe"></i>Sending invites</span><span><i style="background:#dcfce7"></i>Accepting invites</span><span><i style="background:#fef3c7"></i>Managing invites</span><span><i style="background:#fce7f3"></i>Team Invites: non-functional requirements</span><span>solid: stated in the PRD &middot; dashed: inferred &middot; red outline: in a cycle</span></p>
+  <h3>Risks</h3><table><thead><tr><th>ID</th><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr></thead><tbody><tr><td><code>RISK-38ad73</code></td><td>Invite emails may land in spam folders, lowering acceptance rate.</td><td>medium</td><td>medium</td><td>Not stated in PRD</td></tr><tr><td><code>RISK-e2b1e7</code></td><td>Rate limits that are too strict could block legitimate onboarding for large teams.</td><td>medium</td><td>medium</td><td>Not stated in PRD</td></tr><tr><td><code>RISK-ef2de2</code></td><td>Unresolved question: Should Members (not only Admins) be allowed to send invites?</td><td>medium</td><td>medium</td><td>Resolve with the PRD owner before the related stories enter a sprint.</td></tr></tbody></table>
+  <p class="downloads">Download the committed outputs: <a href="samples/team-invites/backlog.json">backlog.json</a> &middot; <a href="samples/team-invites/backlog.md">review markdown</a> &middot; <a href="samples/team-invites/github-issues.json">GitHub Issues</a> &middot; <a href="samples/team-invites/jira.csv">Jira CSV</a> &middot; <a href="samples/team-invites/linear.csv">Linear CSV</a> &middot; <a href="samples/team-invites/dependencies.mmd">mermaid graph</a> &middot; <a href="samples/team-invites/lint.txt">lint report</a></p>
+</div>
+<div class="panel" id="panel-mobile-offline-mode" role="tabpanel" aria-labelledby="tab-mobile-offline-mode" hidden>
+  <p class="summary"><b>2</b> epics &middot; <b>10</b> stories &middot; <b>33</b> pts &middot; <b>2</b> dependencies &middot; <b>4</b> risks &middot; lint <b>94/100 (A)</b> &middot; traceability <b>100%</b> &middot; 10 warnings</p>
+  <div class="split">
+    <div class="col"><h3 class="colhead">PRD <span>examples/mobile-offline-mode.md (synthetic)</span></h3><pre class="prd" data-pane><span id="mobile-offline-mode-L1" class="ln"><a class="no" href="#mobile-offline-mode-L1">1</a># Offline Mode for the Field Inspections App</span><span id="mobile-offline-mode-L2" class="ln"><a class="no" href="#mobile-offline-mode-L2">2</a> </span><span id="mobile-offline-mode-L3" class="ln"><a class="no" href="#mobile-offline-mode-L3">3</a>&gt; SYNTHETIC sample PRD written for prd-to-backlog demos and evals. It does not describe a real</span><span id="mobile-offline-mode-L4" class="ln"><a class="no" href="#mobile-offline-mode-L4">4</a>&gt; product or company.</span><span id="mobile-offline-mode-L5" class="ln"><a class="no" href="#mobile-offline-mode-L5">5</a> </span><span id="mobile-offline-mode-L6" class="ln"><a class="no" href="#mobile-offline-mode-L6">6</a>## Background</span><span id="mobile-offline-mode-L7" class="ln"><a class="no" href="#mobile-offline-mode-L7">7</a> </span><span id="mobile-offline-mode-L8" class="ln"><a class="no" href="#mobile-offline-mode-L8">8</a>Field inspectors use the mobile app at construction sites and rural facilities where signal is</span><span id="mobile-offline-mode-L9" class="ln"><a class="no" href="#mobile-offline-mode-L9">9</a>unreliable. When the connection drops, the app shows a spinner and inspectors lose notes and</span><span id="mobile-offline-mode-L10" class="ln"><a class="no" href="#mobile-offline-mode-L10">10</a>photos. Inspectors fall back to paper and re-type reports later.</span><span id="mobile-offline-mode-L11" class="ln"><a class="no" href="#mobile-offline-mode-L11">11</a> </span><span id="mobile-offline-mode-L12" class="ln"><a class="no" href="#mobile-offline-mode-L12">12</a>## Goals</span><span id="mobile-offline-mode-L13" class="ln"><a class="no" href="#mobile-offline-mode-L13">13</a> </span><span id="mobile-offline-mode-L14" class="ln"><a class="no" href="#mobile-offline-mode-L14">14</a>- Inspectors can complete a full inspection with no connectivity.</span><span id="mobile-offline-mode-L15" class="ln"><a class="no" href="#mobile-offline-mode-L15">15</a>- No inspection data is lost because of connectivity.</span><span id="mobile-offline-mode-L16" class="ln"><a class="no" href="#mobile-offline-mode-L16">16</a>- Reduce re-typed paper reports to near zero.</span><span id="mobile-offline-mode-L17" class="ln"><a class="no" href="#mobile-offline-mode-L17">17</a> </span><span id="mobile-offline-mode-L18" class="ln"><a class="no" href="#mobile-offline-mode-L18">18</a>## Target users</span><span id="mobile-offline-mode-L19" class="ln"><a class="no" href="#mobile-offline-mode-L19">19</a> </span><span id="mobile-offline-mode-L20" class="ln"><a class="no" href="#mobile-offline-mode-L20">20</a>- **Field inspector**: completes inspection checklists, notes and photos on a phone or tablet.</span><span id="mobile-offline-mode-L21" class="ln"><a class="no" href="#mobile-offline-mode-L21">21</a>- **Operations manager**: reviews submitted inspections from the web dashboard.</span><span id="mobile-offline-mode-L22" class="ln"><a class="no" href="#mobile-offline-mode-L22">22</a> </span><span id="mobile-offline-mode-L23" class="ln"><a class="no" href="#mobile-offline-mode-L23">23</a>## Scope</span><span id="mobile-offline-mode-L24" class="ln"><a class="no" href="#mobile-offline-mode-L24">24</a> </span><span id="mobile-offline-mode-L25" class="ln"><a class="no" href="#mobile-offline-mode-L25">25</a>### Must have</span><span id="mobile-offline-mode-L26" class="ln"><a class="no" href="#mobile-offline-mode-L26">26</a> </span><span id="mobile-offline-mode-L27" data-story="mobile-offline-mode-ST-c3081d" class="ln req"><a class="no" href="#mobile-offline-mode-L27">27</a>Inspectors must be able to download assigned inspections for offline use before leaving</span><span id="mobile-offline-mode-L28" data-story="mobile-offline-mode-ST-c3081d" class="ln req"><a class="no" href="#mobile-offline-mode-L28">28</a>coverage. The download includes checklists, prior findings and site documents.</span><span id="mobile-offline-mode-L29" class="ln"><a class="no" href="#mobile-offline-mode-L29">29</a> </span><span id="mobile-offline-mode-L30" data-story="mobile-offline-mode-ST-e3f064" class="ln req"><a class="no" href="#mobile-offline-mode-L30">30</a>The app must let inspectors fill in checklists, add notes and capture photos while offline.</span><span id="mobile-offline-mode-L31" data-story="mobile-offline-mode-ST-e3f064" class="ln req"><a class="no" href="#mobile-offline-mode-L31">31</a>All offline changes are stored locally and encrypted at rest.</span><span id="mobile-offline-mode-L32" class="ln"><a class="no" href="#mobile-offline-mode-L32">32</a> </span><span id="mobile-offline-mode-L33" data-story="mobile-offline-mode-ST-5199d9" class="ln req"><a class="no" href="#mobile-offline-mode-L33">33</a>When connectivity returns, the app must sync queued changes to the server automatically in the</span><span id="mobile-offline-mode-L34" data-story="mobile-offline-mode-ST-5199d9" class="ln req"><a class="no" href="#mobile-offline-mode-L34">34</a>background. Sync must resume after interruption without duplicating photos.</span><span id="mobile-offline-mode-L35" class="ln"><a class="no" href="#mobile-offline-mode-L35">35</a> </span><span id="mobile-offline-mode-L36" data-story="mobile-offline-mode-ST-bc70e9" class="ln req"><a class="no" href="#mobile-offline-mode-L36">36</a>If the same inspection was edited on the server while the inspector was offline, the app</span><span id="mobile-offline-mode-L37" data-story="mobile-offline-mode-ST-bc70e9" class="ln req"><a class="no" href="#mobile-offline-mode-L37">37</a>must detect the conflict and let the inspector choose which version of each conflicting field to keep.</span><span id="mobile-offline-mode-L38" class="ln"><a class="no" href="#mobile-offline-mode-L38">38</a> </span><span id="mobile-offline-mode-L39" data-story="mobile-offline-mode-ST-7d05f0" class="ln req"><a class="no" href="#mobile-offline-mode-L39">39</a>The app should show a clear offline indicator and the number of changes waiting to sync.</span><span id="mobile-offline-mode-L40" class="ln"><a class="no" href="#mobile-offline-mode-L40">40</a> </span><span id="mobile-offline-mode-L41" class="ln"><a class="no" href="#mobile-offline-mode-L41">41</a>### Nice to have</span><span id="mobile-offline-mode-L42" class="ln"><a class="no" href="#mobile-offline-mode-L42">42</a> </span><span id="mobile-offline-mode-L43" data-story="mobile-offline-mode-ST-0d2dcf" class="ln req"><a class="no" href="#mobile-offline-mode-L43">43</a>Inspectors could pre-fetch map tiles for assigned sites so directions work offline.</span><span id="mobile-offline-mode-L44" class="ln"><a class="no" href="#mobile-offline-mode-L44">44</a> </span><span id="mobile-offline-mode-L45" class="ln"><a class="no" href="#mobile-offline-mode-L45">45</a>## Non-functional requirements</span><span id="mobile-offline-mode-L46" class="ln"><a class="no" href="#mobile-offline-mode-L46">46</a> </span><span id="mobile-offline-mode-L47" data-story="mobile-offline-mode-ST-8aae2b" class="ln req"><a class="no" href="#mobile-offline-mode-L47">47</a>- Offline storage must support at least 50 inspections and 2 GB of photos per device.</span><span id="mobile-offline-mode-L48" data-story="mobile-offline-mode-ST-34651f" class="ln req"><a class="no" href="#mobile-offline-mode-L48">48</a>- Local data must be encrypted with a key stored in the platform keystore.</span><span id="mobile-offline-mode-L49" data-story="mobile-offline-mode-ST-6fe87c" class="ln req"><a class="no" href="#mobile-offline-mode-L49">49</a>- Sync of a 20-photo inspection should complete within 3 minutes on a 3G connection.</span><span id="mobile-offline-mode-L50" class="ln"><a class="no" href="#mobile-offline-mode-L50">50</a> </span><span id="mobile-offline-mode-L51" class="ln"><a class="no" href="#mobile-offline-mode-L51">51</a>## Out of scope</span><span id="mobile-offline-mode-L52" class="ln"><a class="no" href="#mobile-offline-mode-L52">52</a> </span><span id="mobile-offline-mode-L53" class="ln"><a class="no" href="#mobile-offline-mode-L53">53</a>- Offline creation of new sites or new inspection templates.</span><span id="mobile-offline-mode-L54" class="ln"><a class="no" href="#mobile-offline-mode-L54">54</a>- Real-time collaboration between inspectors on the same inspection.</span><span id="mobile-offline-mode-L55" class="ln"><a class="no" href="#mobile-offline-mode-L55">55</a> </span><span id="mobile-offline-mode-L56" class="ln"><a class="no" href="#mobile-offline-mode-L56">56</a>## Risks</span><span id="mobile-offline-mode-L57" class="ln"><a class="no" href="#mobile-offline-mode-L57">57</a> </span><span id="mobile-offline-mode-L58" class="ln"><a class="no" href="#mobile-offline-mode-L58">58</a>- Conflict resolution UX may confuse inspectors and lead to the wrong version being kept.</span><span id="mobile-offline-mode-L59" class="ln"><a class="no" href="#mobile-offline-mode-L59">59</a>- Low-end Android devices may run out of storage with large photo sets.</span><span id="mobile-offline-mode-L60" class="ln"><a class="no" href="#mobile-offline-mode-L60">60</a>- Background sync is restricted by iOS and Android battery policies.</span><span id="mobile-offline-mode-L61" class="ln"><a class="no" href="#mobile-offline-mode-L61">61</a> </span><span id="mobile-offline-mode-L62" class="ln"><a class="no" href="#mobile-offline-mode-L62">62</a>## Open questions</span><span id="mobile-offline-mode-L63" class="ln"><a class="no" href="#mobile-offline-mode-L63">63</a> </span><span id="mobile-offline-mode-L64" class="ln"><a class="no" href="#mobile-offline-mode-L64">64</a>- How long should synced inspections remain cached on the device?</span></pre></div>
+    <div class="col"><h3 class="colhead">Generated backlog <span>heuristic generator</span></h3><div class="backlog" data-pane><div class="epic"><h3><code>EP-5715ce</code> Offline Mode for the Field Inspections App</h3>
+<article class="story" id="mobile-offline-mode-ST-c3081d" data-lines="27-28" tabindex="0">
+  <header><code>ST-c3081d</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Download assigned inspections for offline use before leaving coverage</h4>
+  <p>As a field inspector, I want to download assigned inspections for offline use before leaving coverage, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a field inspector, <b>when</b> the field inspector downloads assigned inspections for offline use before leaving coverage, <b>then</b> the download includes checklists, prior findings and site documents.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L27" data-lines="27-28">examples/mobile-offline-mode.md:27-28</a></p>
+  
+</article>
+<article class="story" id="mobile-offline-mode-ST-e3f064" data-lines="30-31" tabindex="0">
+  <header><code>ST-e3f064</code><span class="pill p-must">must</span><span class="pill">5 pts</span></header>
+  <h4>Fill in checklists, add notes and capture photos while offline</h4>
+  <p>As a field inspector, I want to fill in checklists, add notes and capture photos while offline, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a field inspector, <b>when</b> the field inspector fills in checklists, add notes and capture photos while offline, <b>then</b> all offline changes are stored locally and encrypted at rest.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L30" data-lines="30-31">examples/mobile-offline-mode.md:30-31</a></p>
+  
+</article>
+<article class="story" id="mobile-offline-mode-ST-5199d9" data-lines="33-34" tabindex="0">
+  <header><code>ST-5199d9</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Sync queued changes to the server automatically in the background</h4>
+  <p>As a field inspector, I want the system to sync queued changes to the server automatically in the background, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> connectivity returns, <b>then</b> the app must sync queued changes to the server automatically in the background.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L33" data-lines="33-34">examples/mobile-offline-mode.md:33-34</a></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="mobile-offline-mode-ST-327858" data-lines="33-34" tabindex="0">
+  <header><code>ST-327858</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Sync must resume after interruption without duplicating photos</h4>
+  <p>As a field inspector, I want sync to resume after interruption without duplicating photos, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> the behaviour is exercised, <b>then</b> sync must resume after interruption without duplicating photos.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L33" data-lines="33-34">examples/mobile-offline-mode.md:33-34</a> &middot; blocked by <code>ST-5199d9</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="mobile-offline-mode-ST-bc70e9" data-lines="36-37" tabindex="0">
+  <header><code>ST-bc70e9</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Detect the conflict and let the inspector choose which version of each...</h4>
+  <p>As a field inspector, I want the system to detect the conflict and let the inspector choose which version of each conflicting field to keep, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> the same inspection was edited on the server while the inspector was offline, <b>then</b> the app must detect the conflict and let the inspector choose which version of each conflicting field to keep.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L36" data-lines="36-37">examples/mobile-offline-mode.md:36-37</a></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="mobile-offline-mode-ST-7d05f0" data-lines="39-39" tabindex="0">
+  <header><code>ST-7d05f0</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Show a clear offline indicator and the number of changes waiting to sync</h4>
+  <p>As a field inspector, I want the system to show a clear offline indicator and the number of changes waiting to sync, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> the system shows a clear offline indicator and the number of changes waiting to sync, <b>then</b> the app should show a clear offline indicator and the number of changes waiting to sync.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L39" data-lines="39-39">examples/mobile-offline-mode.md:39</a></p>
+  <p class="finding">untestable-criterion: Then-clause uses subjective terms (clear): &quot;the app should show a clear offline indicator and the number of changes waiting to sync&quot;. State a measurable or visible result.</p><p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p><p class="finding">vague-language: Vague wording: &quot;clear&quot;. Replace with a measurable target.</p>
+</article>
+<article class="story" id="mobile-offline-mode-ST-0d2dcf" data-lines="43-43" tabindex="0">
+  <header><code>ST-0d2dcf</code><span class="pill p-could">could</span><span class="pill">3 pts</span></header>
+  <h4>Pre-fetch map tiles for assigned sites</h4>
+  <p>As a field inspector, I want to pre-fetch map tiles for assigned sites, so that directions work offline.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> the field inspector pre-fetches map tiles for assigned sites, <b>then</b> inspectors could pre-fetch map tiles for assigned sites so directions work offline.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L43" data-lines="43-43">examples/mobile-offline-mode.md:43</a></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article></div><div class="epic"><h3><code>EP-bfd533</code> Offline Mode for the Field Inspections App: non-functional requirements</h3>
+<article class="story" id="mobile-offline-mode-ST-8aae2b" data-lines="47-47" tabindex="0">
+  <header><code>ST-8aae2b</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Offline storage must support at least 50 inspections and 2 GB of photos per...</h4>
+  <p>As a field inspector, I want offline storage to support at least 50 inspections and 2 GB of photos per device, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> the behaviour is exercised, <b>then</b> offline storage must support at least 50 inspections and 2 GB of photos per device.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L47" data-lines="47-47">examples/mobile-offline-mode.md:47</a></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="mobile-offline-mode-ST-34651f" data-lines="48-48" tabindex="0">
+  <header><code>ST-34651f</code><span class="pill p-must">must</span><span class="pill">2 pts</span></header>
+  <h4>Local data must be encrypted with a key stored in the platform keystore</h4>
+  <p>As a field inspector, I want local data to be encrypted with a key stored in the platform keystore, so that it supports the goal &quot;No inspection data is lost because of connectivity&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> the behaviour is exercised, <b>then</b> local data must be encrypted with a key stored in the platform keystore.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L48" data-lines="48-48">examples/mobile-offline-mode.md:48</a></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="mobile-offline-mode-ST-6fe87c" data-lines="49-49" tabindex="0">
+  <header><code>ST-6fe87c</code><span class="pill p-should">should</span><span class="pill">5 pts</span></header>
+  <h4>Sync of a 20-photo inspection should complete within 3 minutes on a 3G...</h4>
+  <p>As a field inspector, I want sync of a 20-photo inspection to complete within 3 minutes on a 3G connection, so that it supports the goal &quot;Inspectors can complete a full inspection with no connectivity&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a field inspector, <b>when</b> the behaviour is exercised, <b>then</b> sync of a 20-photo inspection should complete within 3 minutes on a 3G connection.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#mobile-offline-mode-L49" data-lines="49-49">examples/mobile-offline-mode.md:49</a> &middot; blocked by <code>ST-5199d9</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article></div></div></div>
+  </div>
+  <h3>Dependency graph</h3>
+  <div class="graph"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 783" width="496" height="783" role="img" aria-label="Story dependencies for Offline Mode for the Field Inspections App" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<defs><marker id="mobile-offline-mode-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<path d="M216,252 C248,252 248,342.5 280,342.5" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#mobile-offline-mode-arrow)"/>
+<path d="M216,252 C248,252 248,440.5 280,440.5" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#mobile-offline-mode-arrow)"/>
+<g><title>ST-c3081d (3)
+Download assigned inspections for offline use before leaving coverage</title><rect x="16" y="16" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="38" font-size="12" fill="#111827" text-anchor="middle">ST-c3081d (3)</text>
+<text x="116" y="53" font-size="12" fill="#111827" text-anchor="middle">Download assigned</text>
+<text x="116" y="68" font-size="12" fill="#111827" text-anchor="middle">inspections for offline use</text>
+<text x="116" y="83" font-size="12" fill="#111827" text-anchor="middle">before leaving coverage</text>
+</g>
+<g><title>ST-e3f064 (5)
+Fill in checklists, add notes and capture photos while offline</title><rect x="16" y="114" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="136" font-size="12" fill="#111827" text-anchor="middle">ST-e3f064 (5)</text>
+<text x="116" y="151" font-size="12" fill="#111827" text-anchor="middle">Fill in checklists, add</text>
+<text x="116" y="166" font-size="12" fill="#111827" text-anchor="middle">notes and capture photos</text>
+<text x="116" y="181" font-size="12" fill="#111827" text-anchor="middle">while offline</text>
+</g>
+<g><title>ST-5199d9 (3)
+Sync queued changes to the server automatically in the background</title><rect x="16" y="212" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="234" font-size="12" fill="#111827" text-anchor="middle">ST-5199d9 (3)</text>
+<text x="116" y="249" font-size="12" fill="#111827" text-anchor="middle">Sync queued changes to the</text>
+<text x="116" y="264" font-size="12" fill="#111827" text-anchor="middle">server automatically in the</text>
+<text x="116" y="279" font-size="12" fill="#111827" text-anchor="middle">background</text>
+</g>
+<g><title>ST-327858 (3)
+Sync must resume after interruption without duplicating photos</title><rect x="280" y="302.5" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="380" y="324.5" font-size="12" fill="#111827" text-anchor="middle">ST-327858 (3)</text>
+<text x="380" y="339.5" font-size="12" fill="#111827" text-anchor="middle">Sync must resume after</text>
+<text x="380" y="354.5" font-size="12" fill="#111827" text-anchor="middle">interruption without</text>
+<text x="380" y="369.5" font-size="12" fill="#111827" text-anchor="middle">duplicating photos</text>
+</g>
+<g><title>ST-bc70e9 (3)
+Detect the conflict and let the inspector choose which version of each...</title><rect x="16" y="310" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="332" font-size="12" fill="#111827" text-anchor="middle">ST-bc70e9 (3)</text>
+<text x="116" y="347" font-size="12" fill="#111827" text-anchor="middle">Detect the conflict and let</text>
+<text x="116" y="362" font-size="12" fill="#111827" text-anchor="middle">the inspector choose which</text>
+<text x="116" y="377" font-size="12" fill="#111827" text-anchor="middle">version of each...</text>
+</g>
+<g><title>ST-7d05f0 (3)
+Show a clear offline indicator and the number of changes waiting to sync</title><rect x="16" y="408" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="430" font-size="12" fill="#111827" text-anchor="middle">ST-7d05f0 (3)</text>
+<text x="116" y="445" font-size="12" fill="#111827" text-anchor="middle">Show a clear offline</text>
+<text x="116" y="460" font-size="12" fill="#111827" text-anchor="middle">indicator and the number of</text>
+<text x="116" y="475" font-size="12" fill="#111827" text-anchor="middle">changes waiting to sync</text>
+</g>
+<g><title>ST-0d2dcf (3)
+Pre-fetch map tiles for assigned sites</title><rect x="16" y="506" width="200" height="65" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="528" font-size="12" fill="#111827" text-anchor="middle">ST-0d2dcf (3)</text>
+<text x="116" y="543" font-size="12" fill="#111827" text-anchor="middle">Pre-fetch map tiles for</text>
+<text x="116" y="558" font-size="12" fill="#111827" text-anchor="middle">assigned sites</text>
+</g>
+<g><title>ST-8aae2b (3)
+Offline storage must support at least 50 inspections and 2 GB of photos per...</title><rect x="16" y="589" width="200" height="80" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="116" y="611" font-size="12" fill="#111827" text-anchor="middle">ST-8aae2b (3)</text>
+<text x="116" y="626" font-size="12" fill="#111827" text-anchor="middle">Offline storage must support</text>
+<text x="116" y="641" font-size="12" fill="#111827" text-anchor="middle">at least 50 inspections and</text>
+<text x="116" y="656" font-size="12" fill="#111827" text-anchor="middle">2 GB of photos per...</text>
+</g>
+<g><title>ST-34651f (2)
+Local data must be encrypted with a key stored in the platform keystore</title><rect x="16" y="687" width="200" height="80" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="116" y="709" font-size="12" fill="#111827" text-anchor="middle">ST-34651f (2)</text>
+<text x="116" y="724" font-size="12" fill="#111827" text-anchor="middle">Local data must be encrypted</text>
+<text x="116" y="739" font-size="12" fill="#111827" text-anchor="middle">with a key stored in the</text>
+<text x="116" y="754" font-size="12" fill="#111827" text-anchor="middle">platform keystore</text>
+</g>
+<g><title>ST-6fe87c (5)
+Sync of a 20-photo inspection should complete within 3 minutes on a 3G...</title><rect x="280" y="400.5" width="200" height="80" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="380" y="422.5" font-size="12" fill="#111827" text-anchor="middle">ST-6fe87c (5)</text>
+<text x="380" y="437.5" font-size="12" fill="#111827" text-anchor="middle">Sync of a 20-photo</text>
+<text x="380" y="452.5" font-size="12" fill="#111827" text-anchor="middle">inspection should complete</text>
+<text x="380" y="467.5" font-size="12" fill="#111827" text-anchor="middle">within 3 minutes on a 3G...</text>
+</g>
+</svg>
+</div>
+<p class="legend"><span><i style="background:#dbeafe"></i>Offline Mode for the Field Inspections App</span><span><i style="background:#dcfce7"></i>Offline Mode for the Field Inspections App: non-functional requirements</span><span>solid: stated in the PRD &middot; dashed: inferred &middot; red outline: in a cycle</span></p>
+  <h3>Risks</h3><table><thead><tr><th>ID</th><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr></thead><tbody><tr><td><code>RISK-af9cfd</code></td><td>Conflict resolution UX may confuse inspectors and lead to the wrong version being kept.</td><td>medium</td><td>medium</td><td>Not stated in PRD</td></tr><tr><td><code>RISK-62f445</code></td><td>Low-end Android devices may run out of storage with large photo sets.</td><td>medium</td><td>medium</td><td>Not stated in PRD</td></tr><tr><td><code>RISK-8d44b1</code></td><td>Background sync is restricted by iOS and Android battery policies.</td><td>medium</td><td>medium</td><td>Not stated in PRD</td></tr><tr><td><code>RISK-bce6d8</code></td><td>Unresolved question: How long should synced inspections remain cached on the device?</td><td>medium</td><td>medium</td><td>Resolve with the PRD owner before the related stories enter a sprint.</td></tr></tbody></table>
+  <p class="downloads">Download the committed outputs: <a href="samples/mobile-offline-mode/backlog.json">backlog.json</a> &middot; <a href="samples/mobile-offline-mode/backlog.md">review markdown</a> &middot; <a href="samples/mobile-offline-mode/github-issues.json">GitHub Issues</a> &middot; <a href="samples/mobile-offline-mode/jira.csv">Jira CSV</a> &middot; <a href="samples/mobile-offline-mode/linear.csv">Linear CSV</a> &middot; <a href="samples/mobile-offline-mode/dependencies.mmd">mermaid graph</a> &middot; <a href="samples/mobile-offline-mode/lint.txt">lint report</a></p>
+</div>
+<div class="panel" id="panel-usage-based-billing" role="tabpanel" aria-labelledby="tab-usage-based-billing" hidden>
+  <p class="summary"><b>2</b> epics &middot; <b>11</b> stories &middot; <b>27</b> pts &middot; <b>9</b> dependencies &middot; <b>4</b> risks &middot; lint <b>96/100 (A)</b> &middot; traceability <b>100%</b> &middot; 8 warnings</p>
+  <div class="split">
+    <div class="col"><h3 class="colhead">PRD <span>examples/usage-based-billing.md (synthetic)</span></h3><pre class="prd" data-pane><span id="usage-based-billing-L1" class="ln"><a class="no" href="#usage-based-billing-L1">1</a>---</span><span id="usage-based-billing-L2" class="ln"><a class="no" href="#usage-based-billing-L2">2</a>title: Usage-Based Billing</span><span id="usage-based-billing-L3" class="ln"><a class="no" href="#usage-based-billing-L3">3</a>status: draft</span><span id="usage-based-billing-L4" class="ln"><a class="no" href="#usage-based-billing-L4">4</a>---</span><span id="usage-based-billing-L5" class="ln"><a class="no" href="#usage-based-billing-L5">5</a> </span><span id="usage-based-billing-L6" class="ln"><a class="no" href="#usage-based-billing-L6">6</a># Usage-Based Billing</span><span id="usage-based-billing-L7" class="ln"><a class="no" href="#usage-based-billing-L7">7</a> </span><span id="usage-based-billing-L8" class="ln"><a class="no" href="#usage-based-billing-L8">8</a>&gt; SYNTHETIC sample PRD written for prd-to-backlog demos and evals. It does not describe a real</span><span id="usage-based-billing-L9" class="ln"><a class="no" href="#usage-based-billing-L9">9</a>&gt; product or company.</span><span id="usage-based-billing-L10" class="ln"><a class="no" href="#usage-based-billing-L10">10</a> </span><span id="usage-based-billing-L11" class="ln"><a class="no" href="#usage-based-billing-L11">11</a>## Overview</span><span id="usage-based-billing-L12" class="ln"><a class="no" href="#usage-based-billing-L12">12</a> </span><span id="usage-based-billing-L13" class="ln"><a class="no" href="#usage-based-billing-L13">13</a>We currently bill a flat monthly price per seat. Customers running large API workloads pay the</span><span id="usage-based-billing-L14" class="ln"><a class="no" href="#usage-based-billing-L14">14</a>same as light users, and finance cannot price heavy usage. This PRD introduces metered billing</span><span id="usage-based-billing-L15" class="ln"><a class="no" href="#usage-based-billing-L15">15</a>for API calls on top of the seat price.</span><span id="usage-based-billing-L16" class="ln"><a class="no" href="#usage-based-billing-L16">16</a> </span><span id="usage-based-billing-L17" class="ln"><a class="no" href="#usage-based-billing-L17">17</a>## Goals</span><span id="usage-based-billing-L18" class="ln"><a class="no" href="#usage-based-billing-L18">18</a> </span><span id="usage-based-billing-L19" class="ln"><a class="no" href="#usage-based-billing-L19">19</a>- Charge customers in proportion to API usage.</span><span id="usage-based-billing-L20" class="ln"><a class="no" href="#usage-based-billing-L20">20</a>- Give customers a clear, near-real-time view of what they will be billed.</span><span id="usage-based-billing-L21" class="ln"><a class="no" href="#usage-based-billing-L21">21</a>- Close the monthly books without manual usage reconciliation.</span><span id="usage-based-billing-L22" class="ln"><a class="no" href="#usage-based-billing-L22">22</a> </span><span id="usage-based-billing-L23" class="ln"><a class="no" href="#usage-based-billing-L23">23</a>## Personas</span><span id="usage-based-billing-L24" class="ln"><a class="no" href="#usage-based-billing-L24">24</a> </span><span id="usage-based-billing-L25" class="ln"><a class="no" href="#usage-based-billing-L25">25</a>- **Billing admin**: manages the subscription, payment method and invoices for a customer account.</span><span id="usage-based-billing-L26" class="ln"><a class="no" href="#usage-based-billing-L26">26</a>- **Developer**: integrates with the API and watches usage against limits.</span><span id="usage-based-billing-L27" class="ln"><a class="no" href="#usage-based-billing-L27">27</a>- **Finance analyst**: internal user who reconciles revenue each month.</span><span id="usage-based-billing-L28" class="ln"><a class="no" href="#usage-based-billing-L28">28</a> </span><span id="usage-based-billing-L29" class="ln"><a class="no" href="#usage-based-billing-L29">29</a>## Functional requirements</span><span id="usage-based-billing-L30" class="ln"><a class="no" href="#usage-based-billing-L30">30</a> </span><span id="usage-based-billing-L31" class="ln"><a class="no" href="#usage-based-billing-L31">31</a>| ID   | Requirement                                                                                         | Priority |</span><span id="usage-based-billing-L32" class="ln"><a class="no" href="#usage-based-billing-L32">32</a>| ---- | --------------------------------------------------------------------------------------------------- | -------- |</span><span id="usage-based-billing-L33" data-story="usage-based-billing-ST-FR-1" class="ln req"><a class="no" href="#usage-based-billing-L33">33</a>| FR-1 | The system must meter every billable API call per customer account with an idempotency key.        | P0       |</span><span id="usage-based-billing-L34" data-story="usage-based-billing-ST-FR-2" class="ln req"><a class="no" href="#usage-based-billing-L34">34</a>| FR-2 | The system must aggregate metered usage into hourly totals per account and price dimension.        | P0       |</span><span id="usage-based-billing-L35" data-story="usage-based-billing-ST-FR-3" class="ln req"><a class="no" href="#usage-based-billing-L35">35</a>| FR-3 | Billing admins can view current-period usage and projected charges on the billing page. Depends on FR-2. | P0 |</span><span id="usage-based-billing-L36" data-story="usage-based-billing-ST-FR-4" class="ln req"><a class="no" href="#usage-based-billing-L36">36</a>| FR-4 | The system must generate a monthly invoice that itemises seat charges and usage charges. Depends on FR-2. | P0 |</span><span id="usage-based-billing-L37" data-story="usage-based-billing-ST-FR-5" class="ln req"><a class="no" href="#usage-based-billing-L37">37</a>| FR-5 | Billing admins can set a monthly spend alert threshold and receive an email when 80% and 100% are reached. | P1 |</span><span id="usage-based-billing-L38" data-story="usage-based-billing-ST-FR-6" class="ln req"><a class="no" href="#usage-based-billing-L38">38</a>| FR-6 | Developers can query usage for their account through a usage API endpoint.                          | P1       |</span><span id="usage-based-billing-L39" data-story="usage-based-billing-ST-FR-7" class="ln req"><a class="no" href="#usage-based-billing-L39">39</a>| FR-7 | Finance analysts can export monthly usage and invoice lines as CSV for reconciliation. Depends on FR-4. | P1 |</span><span id="usage-based-billing-L40" data-story="usage-based-billing-ST-FR-8" class="ln req"><a class="no" href="#usage-based-billing-L40">40</a>| FR-8 | Billing admins can download past invoices as PDF.                                                    | P2       |</span><span id="usage-based-billing-L41" class="ln"><a class="no" href="#usage-based-billing-L41">41</a> </span><span id="usage-based-billing-L42" class="ln"><a class="no" href="#usage-based-billing-L42">42</a>## Acceptance notes</span><span id="usage-based-billing-L43" class="ln"><a class="no" href="#usage-based-billing-L43">43</a> </span><span id="usage-based-billing-L44" class="ln"><a class="no" href="#usage-based-billing-L44">44</a>- FR-1: If the same idempotency key is received twice, then usage is counted once.</span><span id="usage-based-billing-L45" class="ln"><a class="no" href="#usage-based-billing-L45">45</a>- FR-2: When an hour closes, then its totals are final within 15 minutes.</span><span id="usage-based-billing-L46" class="ln"><a class="no" href="#usage-based-billing-L46">46</a>- FR-3: Projected charges use the trailing 7-day average and are labelled as an estimate.</span><span id="usage-based-billing-L47" class="ln"><a class="no" href="#usage-based-billing-L47">47</a>- FR-5: When usage crosses a threshold, then exactly one alert email is sent per threshold per period.</span><span id="usage-based-billing-L48" class="ln"><a class="no" href="#usage-based-billing-L48">48</a> </span><span id="usage-based-billing-L49" class="ln"><a class="no" href="#usage-based-billing-L49">49</a>## Non-functional requirements</span><span id="usage-based-billing-L50" class="ln"><a class="no" href="#usage-based-billing-L50">50</a> </span><span id="usage-based-billing-L51" data-story="usage-based-billing-ST-0855f9" class="ln req"><a class="no" href="#usage-based-billing-L51">51</a>- Usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms.</span><span id="usage-based-billing-L52" data-story="usage-based-billing-ST-7903c6" class="ln req"><a class="no" href="#usage-based-billing-L52">52</a>- Invoices must reconcile to metered usage with zero unexplained difference at month close.</span><span id="usage-based-billing-L53" data-story="usage-based-billing-ST-7adf64" class="ln req"><a class="no" href="#usage-based-billing-L53">53</a>- Pricing changes must be versioned so past invoices can be regenerated exactly.</span><span id="usage-based-billing-L54" class="ln"><a class="no" href="#usage-based-billing-L54">54</a> </span><span id="usage-based-billing-L55" class="ln"><a class="no" href="#usage-based-billing-L55">55</a>## Out of scope</span><span id="usage-based-billing-L56" class="ln"><a class="no" href="#usage-based-billing-L56">56</a> </span><span id="usage-based-billing-L57" class="ln"><a class="no" href="#usage-based-billing-L57">57</a>- Prepaid credits and committed-use discounts.</span><span id="usage-based-billing-L58" class="ln"><a class="no" href="#usage-based-billing-L58">58</a>- Multi-currency invoicing.</span><span id="usage-based-billing-L59" class="ln"><a class="no" href="#usage-based-billing-L59">59</a>- Tax calculation changes.</span><span id="usage-based-billing-L60" class="ln"><a class="no" href="#usage-based-billing-L60">60</a> </span><span id="usage-based-billing-L61" class="ln"><a class="no" href="#usage-based-billing-L61">61</a>## Dependencies</span><span id="usage-based-billing-L62" class="ln"><a class="no" href="#usage-based-billing-L62">62</a> </span><span id="usage-based-billing-L63" class="ln"><a class="no" href="#usage-based-billing-L63">63</a>- The payments provider integration must support adding usage line items to invoices.</span><span id="usage-based-billing-L64" class="ln"><a class="no" href="#usage-based-billing-L64">64</a> </span><span id="usage-based-billing-L65" class="ln"><a class="no" href="#usage-based-billing-L65">65</a>## Risks</span><span id="usage-based-billing-L66" class="ln"><a class="no" href="#usage-based-billing-L66">66</a> </span><span id="usage-based-billing-L67" class="ln"><a class="no" href="#usage-based-billing-L67">67</a>- High: metering bugs directly cause over- or under-billing and erode customer trust.</span><span id="usage-based-billing-L68" class="ln"><a class="no" href="#usage-based-billing-L68">68</a>- Medium: customers may react badly to bill increases without warning.</span><span id="usage-based-billing-L69" class="ln"><a class="no" href="#usage-based-billing-L69">69</a> </span><span id="usage-based-billing-L70" class="ln"><a class="no" href="#usage-based-billing-L70">70</a>## Open questions</span><span id="usage-based-billing-L71" class="ln"><a class="no" href="#usage-based-billing-L71">71</a> </span><span id="usage-based-billing-L72" class="ln"><a class="no" href="#usage-based-billing-L72">72</a>- Do we offer a free usage tier per plan, and how large?</span></pre></div>
+    <div class="col"><h3 class="colhead">Generated backlog <span>heuristic generator</span></h3><div class="backlog" data-pane><div class="epic"><h3><code>EP-0e7c4c</code> Usage-Based Billing</h3>
+<article class="story" id="usage-based-billing-ST-FR-1" data-lines="33-33" tabindex="0">
+  <header><code>ST-FR-1</code><span class="pill p-must">must</span><span class="pill">3 pts</span></header>
+  <h4>Meter every billable API call per customer account with an idempotency key</h4>
+  <p>As a billing admin, I want the system to meter every billable API call per customer account with an idempotency key, so that it supports the goal &quot;Charge customers in proportion to API usage&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a billing admin, <b>when</b> the same idempotency key is received twice, <b>then</b> usage is counted once.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L33" data-lines="33-33">examples/usage-based-billing.md:33</a></p>
+  
+</article>
+<article class="story" id="usage-based-billing-ST-FR-2" data-lines="34-34" tabindex="0">
+  <header><code>ST-FR-2</code><span class="pill p-must">must</span><span class="pill">5 pts</span></header>
+  <h4>Aggregate metered usage into hourly totals per account and price dimension</h4>
+  <p>As a billing admin, I want the system to aggregate metered usage into hourly totals per account and price dimension, so that it supports the goal &quot;Close the monthly books without manual usage reconciliation&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a billing admin, <b>when</b> an hour closes, <b>then</b> its totals are final within 15 minutes.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L34" data-lines="34-34">examples/usage-based-billing.md:34</a> &middot; blocked by <code>ST-FR-1</code> (inferred)</p>
+  
+</article>
+<article class="story" id="usage-based-billing-ST-FR-3" data-lines="35-35" tabindex="0">
+  <header><code>ST-FR-3</code><span class="pill p-must">must</span><span class="pill">1 pt</span></header>
+  <h4>View current-period usage and projected charges on the billing page</h4>
+  <p>As a billing admin, I want to view current-period usage and projected charges on the billing page, so that it supports the goal &quot;Charge customers in proportion to API usage&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a billing admin, <b>when</b> the billing admin views current-period usage and projected charges on the billing page, <b>then</b> projected charges use the trailing 7-day average and are labelled as an estimate.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L35" data-lines="35-35">examples/usage-based-billing.md:35</a> &middot; blocked by <code>ST-FR-2</code></p>
+  
+</article>
+<article class="story" id="usage-based-billing-ST-FR-4" data-lines="36-36" tabindex="0">
+  <header><code>ST-FR-4</code><span class="pill p-must">must</span><span class="pill">1 pt</span></header>
+  <h4>Generate a monthly invoice that itemises seat charges and usage charges</h4>
+  <p>As a billing admin, I want the system to generate a monthly invoice that itemises seat charges and usage charges, so that it supports the goal &quot;Charge customers in proportion to API usage&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a billing admin, <b>when</b> the system generates a monthly invoice that itemises seat charges and usage charges, <b>then</b> the system must generate a monthly invoice that itemises seat charges and usage charges.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L36" data-lines="36-36">examples/usage-based-billing.md:36</a> &middot; blocked by <code>ST-FR-2</code></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="usage-based-billing-ST-FR-5" data-lines="37-37" tabindex="0">
+  <header><code>ST-FR-5</code><span class="pill p-should">should</span><span class="pill">1 pt</span></header>
+  <h4>Set a monthly spend alert threshold and receive an email when 80% and 100% are...</h4>
+  <p>As a billing admin, I want to set a monthly spend alert threshold and receive an email when 80% and 100% are reached, so that it supports the goal &quot;Close the monthly books without manual usage reconciliation&quot;.</p>
+  <ul class="criteria"><li><b>Given</b> a billing admin, <b>when</b> usage crosses a threshold, <b>then</b> exactly one alert email is sent per threshold per period.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L37" data-lines="37-37">examples/usage-based-billing.md:37</a></p>
+  
+</article>
+<article class="story" id="usage-based-billing-ST-FR-6" data-lines="38-38" tabindex="0">
+  <header><code>ST-FR-6</code><span class="pill p-should">should</span><span class="pill">3 pts</span></header>
+  <h4>Query usage for their account through a usage API endpoint</h4>
+  <p>As a developer, I want to query usage for their account through a usage API endpoint, so that it supports the goal &quot;Charge customers in proportion to API usage&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a developer, <b>when</b> the developer queries usage for their account through a usage API endpoint, <b>then</b> developers can query usage for their account through a usage API endpoint.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L38" data-lines="38-38">examples/usage-based-billing.md:38</a> &middot; blocked by <code>ST-FR-2</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="usage-based-billing-ST-FR-7" data-lines="39-39" tabindex="0">
+  <header><code>ST-FR-7</code><span class="pill p-should">should</span><span class="pill">5 pts</span></header>
+  <h4>Export monthly usage and invoice lines as CSV for reconciliation</h4>
+  <p>As a finance analyst, I want to export monthly usage and invoice lines as CSV for reconciliation, so that it supports the goal &quot;Close the monthly books without manual usage reconciliation&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a finance analyst, <b>when</b> the finance analyst exports monthly usage and invoice lines as CSV for reconciliation, <b>then</b> finance analysts can export monthly usage and invoice lines as CSV for reconciliation.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L39" data-lines="39-39">examples/usage-based-billing.md:39</a> &middot; blocked by <code>ST-FR-4</code>, <code>ST-FR-2</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="usage-based-billing-ST-FR-8" data-lines="40-40" tabindex="0">
+  <header><code>ST-FR-8</code><span class="pill p-could">could</span><span class="pill">3 pts</span></header>
+  <h4>Download past invoices as PDF</h4>
+  <p>As a billing admin, I want to download past invoices as PDF, so that it supports the goal &quot;Give customers a clear, near-real-time view of what they will be billed&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a billing admin, <b>when</b> the billing admin downloads past invoices as PDF, <b>then</b> billing admins can download past invoices as PDF.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L40" data-lines="40-40">examples/usage-based-billing.md:40</a> &middot; blocked by <code>ST-FR-4</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p><p class="finding">vague-language: Vague wording: &quot;clear&quot;. Replace with a measurable target.</p>
+</article></div><div class="epic"><h3><code>EP-83bd65</code> Usage-Based Billing: non-functional requirements</h3>
+<article class="story" id="usage-based-billing-ST-0855f9" data-lines="51-51" tabindex="0">
+  <header><code>ST-0855f9</code><span class="pill p-must">must</span><span class="pill">2 pts</span></header>
+  <h4>Usage ingestion must sustain 5,000 events per second with p99 write latency...</h4>
+  <p>As a billing admin, I want usage ingestion to sustain 5,000 events per second with p99 write latency under 50 ms, so that it supports the goal &quot;Charge customers in proportion to API usage&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a billing admin, <b>when</b> the behaviour is exercised, <b>then</b> usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L51" data-lines="51-51">examples/usage-based-billing.md:51</a> &middot; blocked by <code>ST-FR-2</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="usage-based-billing-ST-7903c6" data-lines="52-52" tabindex="0">
+  <header><code>ST-7903c6</code><span class="pill p-must">must</span><span class="pill">2 pts</span></header>
+  <h4>Invoices must reconcile to metered usage with zero unexplained difference at...</h4>
+  <p>As a billing admin, I want invoices to reconcile to metered usage with zero unexplained difference at month close, so that it supports the goal &quot;Close the monthly books without manual usage reconciliation&quot;.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a billing admin, <b>when</b> the behaviour is exercised, <b>then</b> invoices must reconcile to metered usage with zero unexplained difference at month close.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L52" data-lines="52-52">examples/usage-based-billing.md:52</a> &middot; blocked by <code>ST-FR-4</code> (inferred)</p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article>
+<article class="story" id="usage-based-billing-ST-7adf64" data-lines="53-53" tabindex="0">
+  <header><code>ST-7adf64</code><span class="pill p-must">must</span><span class="pill">1 pt</span></header>
+  <h4>Pricing changes must be versioned</h4>
+  <p>As a billing admin, I want pricing changes to be versioned, so that past invoices can be regenerated exactly.</p>
+  <ul class="criteria"><li class="inferred" title="Inferred: the PRD gave no testable detail"><b>Given</b> a billing admin, <b>when</b> the behaviour is exercised, <b>then</b> pricing changes must be versioned so past invoices can be regenerated exactly.</li></ul>
+  <p class="meta">Traces to <a class="trace" href="#usage-based-billing-L53" data-lines="53-53">examples/usage-based-billing.md:53</a></p>
+  <p class="finding">inferred-criterion: All criteria were inferred; the PRD gives no testable detail for this story.</p>
+</article></div></div></div>
+  </div>
+  <h3>Dependency graph</h3>
+  <div class="graph"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 438" width="1024" height="438" role="img" aria-label="Story dependencies for Usage-Based Billing" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<defs><marker id="usage-based-billing-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<path d="M480,219 C512,219 512,56 544,56" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M480,219 C512,219 512,154 544,154" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M744,154 C776,154 776,309.5 808,309.5" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M216,128.5 C248,128.5 248,219 280,219" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M480,219 C512,219 512,252 544,252" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M480,219 C562,219 562,415 644,415 C644,415 644,415 644,415 C726,415 726,309.5 808,309.5" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M744,154 C776,154 776,121 808,121" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M480,219 C512,219 512,350 544,350" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#usage-based-billing-arrow)"/>
+<path d="M744,154 C776,154 776,211.5 808,211.5" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#usage-based-billing-arrow)"/>
+<g><title>ST-FR-1 (3)
+Meter every billable API call per customer account with an idempotency key</title><rect x="16" y="88.5" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="110.5" font-size="12" fill="#111827" text-anchor="middle">ST-FR-1 (3)</text>
+<text x="116" y="125.5" font-size="12" fill="#111827" text-anchor="middle">Meter every billable API</text>
+<text x="116" y="140.5" font-size="12" fill="#111827" text-anchor="middle">call per customer account</text>
+<text x="116" y="155.5" font-size="12" fill="#111827" text-anchor="middle">with an idempotency key</text>
+</g>
+<g><title>ST-FR-2 (5)
+Aggregate metered usage into hourly totals per account and price dimension</title><rect x="280" y="179" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="380" y="201" font-size="12" fill="#111827" text-anchor="middle">ST-FR-2 (5)</text>
+<text x="380" y="216" font-size="12" fill="#111827" text-anchor="middle">Aggregate metered usage into</text>
+<text x="380" y="231" font-size="12" fill="#111827" text-anchor="middle">hourly totals per account</text>
+<text x="380" y="246" font-size="12" fill="#111827" text-anchor="middle">and price dimension</text>
+</g>
+<g><title>ST-FR-3 (1)
+View current-period usage and projected charges on the billing page</title><rect x="544" y="16" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="644" y="38" font-size="12" fill="#111827" text-anchor="middle">ST-FR-3 (1)</text>
+<text x="644" y="53" font-size="12" fill="#111827" text-anchor="middle">View current-period usage</text>
+<text x="644" y="68" font-size="12" fill="#111827" text-anchor="middle">and projected charges on the</text>
+<text x="644" y="83" font-size="12" fill="#111827" text-anchor="middle">billing page</text>
+</g>
+<g><title>ST-FR-4 (1)
+Generate a monthly invoice that itemises seat charges and usage charges</title><rect x="544" y="114" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="644" y="136" font-size="12" fill="#111827" text-anchor="middle">ST-FR-4 (1)</text>
+<text x="644" y="151" font-size="12" fill="#111827" text-anchor="middle">Generate a monthly invoice</text>
+<text x="644" y="166" font-size="12" fill="#111827" text-anchor="middle">that itemises seat charges</text>
+<text x="644" y="181" font-size="12" fill="#111827" text-anchor="middle">and usage charges</text>
+</g>
+<g><title>ST-FR-5 (1)
+Set a monthly spend alert threshold and receive an email when 80% and 100% are...</title><rect x="16" y="186.5" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="116" y="208.5" font-size="12" fill="#111827" text-anchor="middle">ST-FR-5 (1)</text>
+<text x="116" y="223.5" font-size="12" fill="#111827" text-anchor="middle">Set a monthly spend alert</text>
+<text x="116" y="238.5" font-size="12" fill="#111827" text-anchor="middle">threshold and receive an</text>
+<text x="116" y="253.5" font-size="12" fill="#111827" text-anchor="middle">email when 80% and...</text>
+</g>
+<g><title>ST-FR-6 (3)
+Query usage for their account through a usage API endpoint</title><rect x="544" y="212" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="644" y="234" font-size="12" fill="#111827" text-anchor="middle">ST-FR-6 (3)</text>
+<text x="644" y="249" font-size="12" fill="#111827" text-anchor="middle">Query usage for their</text>
+<text x="644" y="264" font-size="12" fill="#111827" text-anchor="middle">account through a usage API</text>
+<text x="644" y="279" font-size="12" fill="#111827" text-anchor="middle">endpoint</text>
+</g>
+<g><title>ST-FR-7 (5)
+Export monthly usage and invoice lines as CSV for reconciliation</title><rect x="808" y="269.5" width="200" height="80" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="908" y="291.5" font-size="12" fill="#111827" text-anchor="middle">ST-FR-7 (5)</text>
+<text x="908" y="306.5" font-size="12" fill="#111827" text-anchor="middle">Export monthly usage and</text>
+<text x="908" y="321.5" font-size="12" fill="#111827" text-anchor="middle">invoice lines as CSV for</text>
+<text x="908" y="336.5" font-size="12" fill="#111827" text-anchor="middle">reconciliation</text>
+</g>
+<g><title>ST-FR-8 (3)
+Download past invoices as PDF</title><rect x="808" y="88.5" width="200" height="65" rx="6" fill="#dbeafe" stroke="#94a3b8"/>
+<text x="908" y="110.5" font-size="12" fill="#111827" text-anchor="middle">ST-FR-8 (3)</text>
+<text x="908" y="125.5" font-size="12" fill="#111827" text-anchor="middle">Download past invoices as</text>
+<text x="908" y="140.5" font-size="12" fill="#111827" text-anchor="middle">PDF</text>
+</g>
+<g><title>ST-0855f9 (2)
+Usage ingestion must sustain 5,000 events per second with p99 write latency...</title><rect x="544" y="310" width="200" height="80" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="644" y="332" font-size="12" fill="#111827" text-anchor="middle">ST-0855f9 (2)</text>
+<text x="644" y="347" font-size="12" fill="#111827" text-anchor="middle">Usage ingestion must sustain</text>
+<text x="644" y="362" font-size="12" fill="#111827" text-anchor="middle">5,000 events per second with</text>
+<text x="644" y="377" font-size="12" fill="#111827" text-anchor="middle">p99 write latency...</text>
+</g>
+<g><title>ST-7903c6 (2)
+Invoices must reconcile to metered usage with zero unexplained difference at...</title><rect x="808" y="171.5" width="200" height="80" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="908" y="193.5" font-size="12" fill="#111827" text-anchor="middle">ST-7903c6 (2)</text>
+<text x="908" y="208.5" font-size="12" fill="#111827" text-anchor="middle">Invoices must reconcile to</text>
+<text x="908" y="223.5" font-size="12" fill="#111827" text-anchor="middle">metered usage with zero</text>
+<text x="908" y="238.5" font-size="12" fill="#111827" text-anchor="middle">unexplained difference at...</text>
+</g>
+<g><title>ST-7adf64 (1)
+Pricing changes must be versioned</title><rect x="16" y="284.5" width="200" height="65" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="116" y="306.5" font-size="12" fill="#111827" text-anchor="middle">ST-7adf64 (1)</text>
+<text x="116" y="321.5" font-size="12" fill="#111827" text-anchor="middle">Pricing changes must be</text>
+<text x="116" y="336.5" font-size="12" fill="#111827" text-anchor="middle">versioned</text>
+</g>
+</svg>
+</div>
+<p class="legend"><span><i style="background:#dbeafe"></i>Usage-Based Billing</span><span><i style="background:#dcfce7"></i>Usage-Based Billing: non-functional requirements</span><span>solid: stated in the PRD &middot; dashed: inferred &middot; red outline: in a cycle</span></p>
+  <h3>Risks</h3><table><thead><tr><th>ID</th><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr></thead><tbody><tr><td><code>RISK-5ee2dd</code></td><td>Metering bugs directly cause over- or under-billing and erode customer trust.</td><td>medium</td><td>high</td><td>Not stated in PRD</td></tr><tr><td><code>RISK-c891e5</code></td><td>Customers may react badly to bill increases without warning.</td><td>medium</td><td>medium</td><td>Not stated in PRD</td></tr><tr><td><code>RISK-9c1c88</code></td><td>Unresolved question: Do we offer a free usage tier per plan, and how large?</td><td>medium</td><td>medium</td><td>Resolve with the PRD owner before the related stories enter a sprint.</td></tr><tr><td><code>RISK-8d81e6</code></td><td>External dependency: The payments provider integration must support adding usage line items to invoices.</td><td>medium</td><td>high</td><td>Confirm scope and timeline with the owning team before committing dependents.</td></tr></tbody></table>
+  <p class="downloads">Download the committed outputs: <a href="samples/usage-based-billing/backlog.json">backlog.json</a> &middot; <a href="samples/usage-based-billing/backlog.md">review markdown</a> &middot; <a href="samples/usage-based-billing/github-issues.json">GitHub Issues</a> &middot; <a href="samples/usage-based-billing/jira.csv">Jira CSV</a> &middot; <a href="samples/usage-based-billing/linear.csv">Linear CSV</a> &middot; <a href="samples/usage-based-billing/dependencies.mmd">mermaid graph</a> &middot; <a href="samples/usage-based-billing/lint.txt">lint report</a></p>
+</div>
+</section>
+
+<section id="results" class="wrap">
+  <h2>Results</h2>
+  <p>Heuristic generator on the 3 bundled synthetic PRDs (33 requirements, 33 stories, 83 points). LLM providers are not run here because the site build uses no API keys.</p>
+  <table class="num"><thead><tr><th>PRD</th><th>Extraction recall</th><th>Capability coverage</th><th>Traceability</th><th>Lint score</th><th>Schema valid</th><th>Stories</th></tr></thead><tbody><tr><td>Team Invites</td><td>100%</td><td>100%</td><td>100%</td><td>97</td><td>yes</td><td>12</td></tr><tr><td>Offline Mode for the Field Inspections App</td><td>100%</td><td>92%</td><td>100%</td><td>94</td><td>yes</td><td>10</td></tr><tr><td>Usage-Based Billing</td><td>100%</td><td>100%</td><td>100%</td><td>96</td><td>yes</td><td>11</td></tr></tbody></table>
+  <ul class="misses"><li>Offline Mode for the Field Inspections App: missed Cache retention policy. Open questions in this PRD become risks, not stories: "How long should synced inspections remain cached on the device?"</li></ul>
+  <h3>How evaluation works</h3>
+  <ul>
+    <li><b>Extraction recall</b>: share of hand-labelled requirement phrases (<code>eval/expected/*.json</code>) found among the parser's requirements.</li>
+    <li><b>Capability coverage</b>: share of hand-written capabilities whose keywords all appear in at least one story. Expectations are written independently of any generator's wording.</li>
+    <li><b>Traceability</b>: requirements covered by at least one story.</li>
+    <li><b>Lint score</b>: 0.6 &times; mean story quality + 0.4 &times; traceability, minus 10 per dependency cycle. Each story starts at 100 and loses 25 per error and 10 per warning.</li>
+    <li><b>Schema valid</b>: output passes the zod <code>BacklogSchema</code> plus referential checks.</li>
+  </ul>
+  <h3>What the linter says about the PRDs</h3>
+  <p>20 of 33 (61%) requirements had no testable detail in the PRD, so 20 of 36 (56%) acceptance criteria had to be inferred. For 31 of 33 (94%) stories the "so that" clause was linked to a PRD goal by the generator because the requirement did not state one. These are the PRD gaps the tool is built to surface, and where an LLM generator should beat the heuristic.</p>
+</section>
+
+<section id="quickstart" class="wrap">
+  <h2>Quickstart</h2>
+  <p>Requires Node 20 or later. No API keys.</p>
+  <pre><code>git clone https://github.com/seanmcrae/prd-to-backlog.git &amp;&amp; cd prd-to-backlog
+npm ci &amp;&amp; npm run build
+node dist/bin.js generate examples/team-invites.md --out out/
+node dist/bin.js lint out/backlog.json --min-score 90
+node dist/bin.js export out/backlog.json --format jira --out out/jira.csv</code></pre>
+  <table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody>
+    <tr><td><code>prd2backlog generate &lt;prd.md&gt; [--out dir] [--provider p]</code></td><td>Writes <code>backlog.json</code> and a reviewable <code>backlog.md</code></td></tr>
+    <tr><td><code>prd2backlog lint &lt;backlog.json&gt; [--format json] [--min-score n]</code></td><td>Scored report; <code>--min-score</code> exits 1 below the threshold</td></tr>
+    <tr><td><code>prd2backlog export &lt;backlog.json&gt; --format &lt;f&gt;</code></td><td><code>github</code>, <code>jira</code>, <code>linear</code>, <code>markdown</code>, <code>mermaid</code></td></tr>
+    <tr><td><code>prd2backlog serve [--port 8787]</code></td><td>HTTP API: <code>POST /generate</code>, <code>/lint</code>, <code>/export</code></td></tr>
+  </tbody></table>
+</section>
+
+<section id="architecture" class="wrap">
+  <h2>Architecture</h2>
+  <div class="arch">
+    <figure class="graph"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 802" width="600" height="802" role="img" aria-label="prd-to-backlog architecture" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<defs><marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<path d="M228,51 C228,71 228,71 228,91" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M228,156 C228,176 228,176 228,196" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M228,261 C228,281 228,281 228,301" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M228,336 C228,356 116,356 116,376" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M228,336 C228,356 340,356 340,376" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M340,426 C340,446 247,446 247,466" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M347,491 C474,491 474,401 440,401" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<text x="478" y="450" font-size="11" fill="#4b5563" text-anchor="start">errors fed back</text>
+<path d="M116,426 C116,458.5 116,458.5 116,491 C116,491 116,491 116,491 C116,523.5 228,523.5 228,556" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M247,516 C247,536 228,536 228,556" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M228,606 C228,626 116,626 116,646" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M228,606 C228,626 340,626 340,646" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<path d="M116,711 C116,731 228,731 228,751" fill="none" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arch-arrow)"/>
+<g><title>PRD markdown</title><rect x="128" y="16" width="200" height="35" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="228" y="38" font-size="12" fill="#111827" text-anchor="middle">PRD markdown</text>
+</g>
+<g><title>markdown reader
+sections, lists, tables, line spans</title><rect x="128" y="91" width="200" height="65" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="228" y="113" font-size="12" fill="#111827" text-anchor="middle">markdown reader</text>
+<text x="228" y="128" font-size="12" fill="#111827" text-anchor="middle">sections, lists, tables, line</text>
+<text x="228" y="143" font-size="12" fill="#111827" text-anchor="middle">spans</text>
+</g>
+<g><title>requirement extraction
+stable IDs, priority, personas, goals, scope cuts</title><rect x="128" y="196" width="200" height="65" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="228" y="218" font-size="12" fill="#111827" text-anchor="middle">requirement extraction</text>
+<text x="228" y="233" font-size="12" fill="#111827" text-anchor="middle">stable IDs, priority,</text>
+<text x="228" y="248" font-size="12" fill="#111827" text-anchor="middle">personas, goals, scope cuts</text>
+</g>
+<g><title>BacklogGenerator</title><rect x="128" y="301" width="200" height="35" rx="6" fill="#fef3c7" stroke="#94a3b8"/>
+<text x="228" y="323" font-size="12" fill="#111827" text-anchor="middle">BacklogGenerator</text>
+</g>
+<g><title>heuristic
+offline, deterministic</title><rect x="16" y="376" width="200" height="50" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="116" y="398" font-size="12" fill="#111827" text-anchor="middle">heuristic</text>
+<text x="116" y="413" font-size="12" fill="#111827" text-anchor="middle">offline, deterministic</text>
+</g>
+<g><title>LLM generator
+Anthropic / OpenAI</title><rect x="240" y="376" width="200" height="50" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="340" y="398" font-size="12" fill="#111827" text-anchor="middle">LLM generator</text>
+<text x="340" y="413" font-size="12" fill="#111827" text-anchor="middle">Anthropic / OpenAI</text>
+</g>
+<g><title>zod validation +
+referential checks</title><rect x="147" y="466" width="200" height="50" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="247" y="488" font-size="12" fill="#111827" text-anchor="middle">zod validation +</text>
+<text x="247" y="503" font-size="12" fill="#111827" text-anchor="middle">referential checks</text>
+</g>
+<g><title>backlog.json
+BacklogSchema</title><rect x="128" y="556" width="200" height="50" rx="6" fill="#dcfce7" stroke="#94a3b8"/>
+<text x="228" y="578" font-size="12" fill="#111827" text-anchor="middle">backlog.json</text>
+<text x="228" y="593" font-size="12" fill="#111827" text-anchor="middle">BacklogSchema</text>
+</g>
+<g><title>linter
+INVEST, vague terms, coverage, cycles</title><rect x="16" y="646" width="200" height="65" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="116" y="668" font-size="12" fill="#111827" text-anchor="middle">linter</text>
+<text x="116" y="683" font-size="12" fill="#111827" text-anchor="middle">INVEST, vague terms, coverage,</text>
+<text x="116" y="698" font-size="12" fill="#111827" text-anchor="middle">cycles</text>
+</g>
+<g><title>exporters
+GitHub, Jira, Linear, markdown, mermaid</title><rect x="240" y="646" width="200" height="65" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="340" y="668" font-size="12" fill="#111827" text-anchor="middle">exporters</text>
+<text x="340" y="683" font-size="12" fill="#111827" text-anchor="middle">GitHub, Jira, Linear,</text>
+<text x="340" y="698" font-size="12" fill="#111827" text-anchor="middle">markdown, mermaid</text>
+</g>
+<g><title>score report</title><rect x="128" y="751" width="200" height="35" rx="6" fill="#eef2ff" stroke="#94a3b8"/>
+<text x="228" y="773" font-size="12" fill="#111827" text-anchor="middle">score report</text>
+</g>
+</svg>
+<figcaption class="fine">Drawn at build time from the Mermaid diagram in the README.</figcaption></figure>
+    <div class="prose"><h3>Design decisions</h3><ul>
+<li><strong>Requirements are parser-owned.</strong> Models generate epics, stories, dependencies and risks
+only. The requirement list, its IDs and its line numbers always come from the parser, so a
+model cannot invent or reword scope, and every story citation can be checked.</li>
+<li><strong>Content-addressed IDs.</strong> A requirement without an explicit PRD ID (<code>FR-3</code>) gets
+<code>REQ-&lt;sha1 of normalised text&gt;</code>. Inserting, deleting or reordering other requirements does
+not renumber it, so references in trackers stay valid across PRD revisions. Editing the
+requirement&#39;s own wording changes its ID, and that is intended: it is a different requirement.</li>
+<li><strong>A heuristic default that does real work.</strong> It reads the PRD structure, not keywords. Detail
+bullets become Given/When/Then criteria, headings become epics, &quot;Must have&quot; buckets set
+priority, and &quot;Depends on FR-2&quot; becomes an explicit edge. Create/consume verb pairs (&quot;invite&quot;
+then &quot;revoke an invite&quot;) become inferred edges. Same input, byte-identical output, which is
+what makes snapshot tests and the committed samples possible.</li>
+<li><strong>Inference is labelled, never hidden.</strong> Criteria carry <code>origin: prd | inferred</code>. Benefits
+linked to a PRD goal carry a <code>benefit-inferred</code> label. Inferred dependencies are dotted in the
+graph. Estimates list every signal that moved the number. The linter turns these labels into
+review prompts instead of treating generated text as fact.</li>
+<li><strong>Repair loop over trust.</strong> LLM output goes through JSON extraction, zod validation and
+referential checks. Unknown requirement IDs, dangling dependencies and uncited stories are
+sent back to the model verbatim, for up to three attempts, after which it fails loudly.</li>
+<li><strong>A score you can argue with.</strong> Each story starts at 100 and loses 25 per error and 10 per
+warning. The backlog score is 60% mean story quality plus 40% traceability coverage, minus
+10 per dependency cycle. Info findings cost nothing; they mark things a person should look at.</li>
+<li><strong>Own markdown reader instead of remark.</strong> PRDs use a small, predictable subset of markdown.
+A reader of under 300 lines with exact line spans, setext headings, nested lists, tables and front
+matter was simpler to make line-accurate than mapping mdast positions back through
+list nesting. It is covered by its own tests.</li>
+</ul>
+</div>
+  </div>
+</section>
+
+<section id="product" class="wrap">
+  <h2>Product brief</h2>
+  <p class="fine">Rendered from <a href="https://github.com/seanmcrae/prd-to-backlog/blob/main/docs/PRODUCT.md">docs/PRODUCT.md</a>.</p>
+  <div class="prose product"><h3>Problem</h3>
+<p>Between &quot;PRD approved&quot; and &quot;sprint planned&quot; a PM or eng lead spends hours, sometimes days,
+re-typing the PRD into a tracker. The output is worse than the input, in four predictable ways:</p>
+<ol>
+<li><strong>Dropped scope.</strong> A requirement in a sub-bullet or a prose paragraph never becomes a
+ticket. Nobody notices until QA or a customer does.</li>
+<li><strong>Invented scope.</strong> Tickets show up that no requirement asked for. Sometimes they are good
+ideas, but they skip review because they look like they came from the PRD.</li>
+<li><strong>Untestable acceptance criteria.</strong> &quot;Should be fast and easy&quot; goes straight from the PRD into
+the ticket. The disagreement about what &quot;done&quot; means is pushed into the sprint.</li>
+<li><strong>Lost traceability.</strong> Once tickets exist, nobody can answer &quot;which ticket covers PRD
+line 41?&quot; or &quot;what did the PRD say about this ticket?&quot;. When the PRD changes, nobody knows
+which tickets are now wrong.</li>
+</ol>
+<p>The same translation also hides PRD quality problems. A requirement with no testable detail
+reads fine in a doc and only becomes visible when someone tries to write its acceptance
+criteria.</p>
+<h3>Users and jobs to be done</h3>
+<table>
+<thead>
+<tr>
+<th>User</th>
+<th>Job</th>
+<th>What they need from the tool</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Product manager (PRD author)</td>
+<td>&quot;Turn my approved PRD into a first-draft backlog I can review in an hour, not build in a day.&quot;</td>
+<td>Complete coverage, stories in the team&#39;s format, the gaps in the PRD itself called out</td>
+</tr>
+<tr>
+<td>Engineering lead</td>
+<td>&quot;Know the backlog is buildable before planning: sized, sequenced, no circular dependencies.&quot;</td>
+<td>Estimates with visible reasoning, a dependency graph, cycle detection</td>
+</tr>
+<tr>
+<td>Reviewer / QA</td>
+<td>&quot;Check that every requirement has testable criteria and nothing extra slipped in.&quot;</td>
+<td>Requirement-to-story trace, inferred-content labels, an untraced-story check</td>
+</tr>
+<tr>
+<td>Team running PRD reviews</td>
+<td>&quot;Gate low-quality PRDs before they reach planning.&quot;</td>
+<td>A score with a CI exit code (<code>lint --min-score</code>)</td>
+</tr>
+</tbody></table>
+<h3>Scope</h3>
+<p><strong>In scope (v0.1, this repo)</strong></p>
+<ul>
+<li>Markdown PRDs: headings, nested bullets, tables, prose with modal verbs, front matter,
+&quot;Acceptance notes&quot; sections keyed by requirement ID.</li>
+<li>Requirement extraction with stable IDs and source line spans. Personas, goals, out-of-scope
+items, risks, open questions and external dependencies are captured as context.</li>
+<li>Backlog generation: deterministic heuristic (default, offline), plus Anthropic and OpenAI
+behind one interface, with schema validation and a repair loop.</li>
+<li>Quality linting with a 0-100 score, and exports to GitHub Issues payloads, Jira CSV, Linear
+CSV, markdown and mermaid.</li>
+<li>CLI, a small stateless HTTP API, and an offline eval harness.</li>
+</ul>
+<p><strong>Out of scope (deliberately)</strong></p>
+<ul>
+<li>Writing to trackers through their APIs. Exports are files a person imports after review.
+Pushing straight to Jira would skip the review step that the whole design depends on.</li>
+<li>Google Docs, Confluence or Notion ingestion. Markdown export from those tools is good
+enough for v0.1, and connectors are an integration project, not a product question.</li>
+<li>Sprint planning, capacity or velocity forecasting. Estimates are relative sizing inputs.</li>
+<li>Multi-document PRDs and PRD diffing (see Roadmap).</li>
+</ul>
+<h3>Requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+<th>How it is met</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>R1</td>
+<td>Every extracted requirement is traceable to PRD lines and keeps its ID when other requirements change</td>
+<td>Line spans on every block; content-addressed IDs or explicit PRD IDs (<code>REQ-FR-3</code>)</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Every requirement is covered by at least one story, or the gap is reported</td>
+<td><code>orphan-requirement</code> rule; traceability coverage % in the score</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>No story enters the backlog without citing a requirement</td>
+<td><code>untraced-story</code> rule; LLM output with uncited stories is rejected and repaired</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Generated content is distinguishable from PRD content</td>
+<td><code>origin</code> on criteria, <code>benefit-inferred</code> label, explicit vs inferred dependency <code>kind</code></td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Output is machine-validated before anyone sees it</td>
+<td>zod <code>BacklogSchema</code> plus referential checks in <code>validateBacklog</code></td>
+</tr>
+<tr>
+<td>R6</td>
+<td>Works with no network access and no API keys</td>
+<td>Heuristic generator is the default; all tests run offline with faked HTTP for LLM adapters</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>Same input, same output for the default path</td>
+<td>No timestamps or randomness; committed sample outputs are checked by a test</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Import into the trackers teams already use</td>
+<td>GitHub, Jira CSV (epic links and blockers by Issue Id), Linear CSV</td>
+</tr>
+</tbody></table>
+<h3>Success metrics and evals</h3>
+<p>The tool measures itself on four axes. The first two are automated today; the last two need a
+pilot with real users and are listed so the instrumentation gets built with that in mind.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+<th>Current reading (bundled synthetic corpus, heuristic generator)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Extraction recall</td>
+<td>Share of hand-labelled requirement phrases found among extracted requirements</td>
+<td>100% on all three PRDs (33 of 33)</td>
+</tr>
+<tr>
+<td>Capability coverage</td>
+<td>Share of hand-written capabilities (keyword sets) present in at least one story</td>
+<td>100%, 100%, 92%; the miss is an open question the generator turns into a risk</td>
+</tr>
+<tr>
+<td>Traceability coverage</td>
+<td>Requirements with at least one story / all requirements</td>
+<td>100% on all three</td>
+</tr>
+<tr>
+<td>Lint score</td>
+<td>0.6 x mean story score + 0.4 x traceability %, minus 10 per dependency cycle</td>
+<td>97 (team invites), 96 (billing), 94 (offline mode)</td>
+</tr>
+<tr>
+<td>Schema validity</td>
+<td>Output passes <code>validateBacklog</code></td>
+<td>3 of 3</td>
+</tr>
+<tr>
+<td>PM edit distance / acceptance</td>
+<td>Share of generated stories accepted unchanged, edited, or deleted during review; token edit distance on edited ones</td>
+<td>Not measured yet; needs a review UI or a diff of <code>backlog.json</code> before and after review</td>
+</tr>
+<tr>
+<td>Time saved</td>
+<td>Minutes from approved PRD to an import-ready backlog, against the team&#39;s manual baseline</td>
+<td>Not measured yet; pilot metric</td>
+</tr>
+</tbody></table>
+<p>All current readings come from running <code>npm run eval</code> and <code>prd2backlog lint</code> on the three
+synthetic PRDs in <code>examples/</code>. They show the pipeline is wired correctly and the heuristic
+handles well-structured PRDs. They do not show performance on messy real-world PRDs, and the
+lint score partly grades the heuristic&#39;s own phrasing.</p>
+<p>The more useful reading is what the linter says about the inputs. Across the corpus, 20 of 36
+acceptance criteria (56%) had to be inferred, because 20 of 33 requirements had no testable
+detail in the PRD. For 31 of 33 stories the benefit clause was linked to a PRD goal by the generator,
+because the requirement did not state its own &quot;so that&quot;. Those are the PRD-quality gaps this
+tool exists to surface, and they are also where an LLM generator should beat the heuristic. The
+eval harness is built to measure exactly that once API keys are available: same expectations,
+one row per generator.</p>
+<h3>Minimum viable quality</h3>
+<p>Release thresholds for a change to the parser, a generator or the linter. The &quot;ship&quot; column for the
+first five rows is what <code>test/eval.test.ts</code> already enforces on the bundled synthetic PRDs; the
+&quot;delight&quot; column needs the messy-PRD set and a verbatim-copy baseline that do not exist yet.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Do not ship</th>
+<th>Ship</th>
+<th>Delight</th>
+<th>Measured today</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Schema validity</td>
+<td>Any backlog that fails <code>validateBacklog</code></td>
+<td>3 of 3</td>
+<td>Every PRD in a larger, messier set</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Extraction recall</td>
+<td>Below 100% on any bundled PRD</td>
+<td>100% (33 of 33 today)</td>
+<td>95% or higher on messy PRDs</td>
+<td>Yes, bundled only</td>
+</tr>
+<tr>
+<td>Traceability coverage</td>
+<td>Below 100%</td>
+<td>100%</td>
+<td>100% after a PRD revision, with changed requirements reported by ID</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Capability coverage, per PRD</td>
+<td>Below 90%</td>
+<td>90% or higher (92-100% today)</td>
+<td>100%, and clearly above a verbatim-copy baseline</td>
+<td>Yes, but with no baseline (issue #6)</td>
+</tr>
+<tr>
+<td>Lint score, per PRD</td>
+<td>Below 90</td>
+<td>90 or higher (94-97 today)</td>
+<td>95 or higher with no <code>untestable-criterion</code> warning surviving review</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Invented scope from an LLM generator</td>
+<td>Any untraced story reaching the output</td>
+<td>0 untraced stories (the repair loop rejects them)</td>
+<td>0 invented criteria on a precision check as well</td>
+<td>Untraced stories yes; criteria precision no (issue #7)</td>
+</tr>
+<tr>
+<td>PM acceptance rate</td>
+<td>Not set</td>
+<td>Not set</td>
+<td>Not set</td>
+<td>No; the threshold should come from the first pilot, not be guessed here</td>
+</tr>
+</tbody></table>
+<h3>Cost at 1x and 10x usage</h3>
+<p>Estimates only, from what the repo itself defines. It defines no traffic level, so 1x is set at
+100 PRDs a month for illustration.</p>
+<table>
+<thead>
+<tr>
+<th>Usage</th>
+<th>Heuristic generator (default)</th>
+<th>Anthropic generator: output-token ceiling</th>
+<th>OpenAI generator</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1x: 100 PRDs a month</td>
+<td>No model calls; local compute only</td>
+<td>4.8M output tokens a month</td>
+<td>No ceiling</td>
+</tr>
+<tr>
+<td>10x: 1,000 PRDs a month</td>
+<td>Same</td>
+<td>48M output tokens a month</td>
+<td>No ceiling</td>
+</tr>
+</tbody></table>
+<p>The Anthropic ceiling is the adapter&#39;s <code>max_tokens</code> of 16,000 per call times the default three
+validation-and-repair attempts, so 48,000 output tokens per PRD at worst. Each repair attempt also
+resends the PRD and schema as input, which the repo does not measure. The OpenAI adapter sets no
+output cap, so it has no ceiling to estimate. The repo holds no vendor prices and no measured token
+counts, so none of this is converted to dollars; issue #7 tracks recording tokens, latency and
+repair attempts per case. The heuristic path costs the same at 1x and 10x because it never calls a
+model, and the HTTP API is stateless, so it scales with plain compute.</p>
+<h3>Trade-offs and alternatives considered</h3>
+<p><strong>Heuristic vs LLM generation.</strong> The heuristic is free, instant, private and deterministic, and
+it never invents scope. But it writes one story per requirement, cannot split or merge, and
+leans on the PRD&#39;s own wording. An LLM writes better benefits and criteria and can slice
+stories, but it costs money per run, varies between runs and can hallucinate. The decision was
+to keep both behind one interface, make the heuristic the default, and hold the LLM to the same
+contract through validation and repair. Teams can start without sending a PRD to a vendor and
+switch on a model when the eval shows it earns its cost.</p>
+<p><strong>Human review as a step, not an option.</strong> The obvious feature is &quot;push to Jira&quot;. It was cut on
+purpose. The output is a reviewable <code>backlog.md</code> plus import files, and inferred content is
+labelled so the reviewer knows where to look. The linter&#39;s info findings exist to direct
+review time, not to block anything.</p>
+<p><strong>Own markdown reader vs remark/unified.</strong> Remark is more complete, but the product needs exact
+line spans for list items nested in list items and for table rows, plus a few PRD-specific
+conventions. A small reader with focused tests was cheaper than mapping mdast positions, and
+it has no runtime dependencies.</p>
+<p><strong>Content-hash IDs vs sequential IDs.</strong> Sequential IDs (<code>REQ-1</code>, <code>REQ-2</code>) are friendlier but
+renumber on every insertion, which breaks every downstream reference. Hash IDs are ugly but
+stable. Explicit IDs written in the PRD always win, so teams that number requirements keep
+their numbering.</p>
+<p><strong>One composite score vs a checklist.</strong> A single number is easy to game and hides detail, but
+it is what makes the <code>--min-score</code> CI gate and generator comparison possible. The report always
+shows the components (story quality, coverage, cycles) and every finding, so the number is
+never the only output.</p>
+<h3>Risks</h3>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hallucinated scope from LLM generators: stories or criteria the PRD never asked for</td>
+<td>High</td>
+<td>High</td>
+<td>Requirements are parser-owned; stories must cite known IDs (enforced in the repair loop); <code>untraced-story</code> and <code>out-of-scope-overlap</code> rules</td>
+</tr>
+<tr>
+<td>Reviewers rubber-stamp generated stories because they look polished</td>
+<td>Medium</td>
+<td>High</td>
+<td>Inferred content is labelled throughout; stories with only inferred criteria are warnings, not info; review is a required step (no direct push)</td>
+</tr>
+<tr>
+<td>Heuristic phrasing degrades on PRDs that do not follow common structure</td>
+<td>High</td>
+<td>Medium</td>
+<td>Extraction warnings when nothing looks like a requirement; awkward phrasings fall back to literal text the linter flags; eval set to grow with messy PRDs</td>
+</tr>
+<tr>
+<td>Score inflation: teams tune PRDs to the linter rather than to clarity</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Score components shown separately; vague-term list is conservative; score positioned as a review aid and CI floor, not a target</td>
+</tr>
+<tr>
+<td>Tracker import formats drift</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Exporters are small and snapshot-tested; README tells users to confirm column mapping on first import</td>
+</tr>
+<tr>
+<td>Sending confidential PRDs to model vendors</td>
+<td>Medium</td>
+<td>High</td>
+<td>Offline default; LLM providers only run when explicitly selected and keyed</td>
+</tr>
+</tbody></table>
+<h3>Roadmap</h3>
+<p><strong>Now (v0.1, shipped in this repo)</strong></p>
+<ul>
+<li>Markdown ingestion with traceable, stable requirement IDs.</li>
+<li>Heuristic, Anthropic and OpenAI generators behind one validated contract.</li>
+<li>Linter with score and CI gate; GitHub, Jira, Linear, markdown and mermaid exports.</li>
+<li>Offline eval on three synthetic PRDs.</li>
+</ul>
+<p><strong>Next</strong></p>
+<ul>
+<li>Run the eval against both LLM providers and publish the comparison, including cost and
+latency per PRD.</li>
+<li>Grow the eval set with deliberately messy PRDs (prose-only, mixed numbering, requirements
+hidden in tables of contents) and add a precision check for invented stories.</li>
+<li>Story splitting suggestions for <code>invest-small</code> findings, using the criteria as split points.</li>
+<li>PRD diff mode: re-run on a revised PRD and report added, removed and changed requirements by
+ID, with the stories each change affects.</li>
+</ul>
+<p><strong>Later</strong></p>
+<ul>
+<li>Two-way sync with trackers. Push reviewed backlogs through the Jira, Linear and GitHub APIs,
+keep the requirement-to-issue mapping, and pull tracker edits back so the PRD trace stays
+true after sprint changes.</li>
+<li>Measure PM edit distance and acceptance rate from that sync loop. This is the metric that
+tells us whether the drafts actually save time.</li>
+<li>Google Docs and Confluence ingestion, with the same line-level traceability.</li>
+</ul>
+</div>
+</section>
+
+<section id="limitations" class="wrap">
+  <h2>Limitations</h2>
+  <div class="prose"><ul>
+<li>The heuristic generator writes one story per requirement. It does not split a large
+requirement or merge small ones. That is a refinement call for a person or an LLM.</li>
+<li>Story phrasing is pattern-based (&quot;X can Y&quot;, &quot;The system must Y&quot;, &quot;As a X, I want Y&quot;). Unusual
+sentence shapes fall back to a literal &quot;I want ...&quot; clause, and the linter usually flags them.</li>
+<li>Inferred dependencies come from verb/noun overlap. They catch &quot;create before act on&quot; chains
+and miss semantic ones (for example, offline storage before background sync).</li>
+<li>Estimates are relative signals, not velocity-calibrated forecasts.</li>
+<li>The lint score grades structure and wording, not whether the product decisions are right. On
+the bundled corpus it is also grading the heuristic&#39;s own output. It is most useful for
+comparing generators, or a backlog before and after review.</li>
+<li>The LLM adapters are covered by tests against faked HTTP responses. They have not been
+benchmarked against live models in this repo, so the eval table above has heuristic rows only.</li>
+<li>Jira and Linear CSV column names follow their importers&#39; documented fields. Confirm the
+column mapping in the importer UI on first use.</li>
+</ul>
+</div>
+</section>
+</main>
+<footer><div class="wrap">prd-to-backlog v0.1.0 &middot; <a href="https://github.com/seanmcrae/prd-to-backlog">Source on GitHub</a> &middot; <a href="https://github.com/seanmcrae/prd-to-backlog/blob/main/CONTRIBUTING.md">Contributing</a> &middot; MIT License, copyright 2026 Sean McRae. All PRDs on this page are synthetic and describe no real product or company. Built by <code>npm run site</code>.</div></footer>
+<script>
+(() => {
+  const tabs = [...document.querySelectorAll('[role=tab]')];
+  const select = (tab) => {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    }
+  };
+  for (const t of tabs) t.addEventListener('click', () => select(t));
+  const clear = (panel) => panel.querySelectorAll('.hl').forEach((el) => el.classList.remove('hl'));
+  const mark = (story) => {
+    const panel = story.closest('.panel');
+    clear(panel);
+    story.classList.add('hl');
+    const [from, to] = (story.dataset.lines || '').split('-').map(Number);
+    if (!from) return;
+    const slug = panel.id.replace('panel-', '');
+    for (let n = from; n <= to; n++) document.getElementById(slug + '-L' + n)?.classList.add('hl');
+    const first = document.getElementById(slug + '-L' + from);
+    const pane = first.closest('[data-pane]');
+    pane.scrollTo({ top: first.offsetTop - pane.clientHeight / 3, behavior: 'smooth' });
+  };
+  document.querySelectorAll('.story').forEach((story) => {
+    story.addEventListener('mouseenter', () => mark(story));
+    story.addEventListener('focus', () => mark(story));
+  });
+  document.querySelectorAll('.ln.req').forEach((line) => {
+    line.addEventListener('click', (event) => {
+      if (event.target.closest('a')) return;
+      const story = document.getElementById(line.dataset.story);
+      const pane = story.closest('[data-pane]');
+      pane.scrollTo({ top: story.offsetTop - 8, behavior: 'smooth' });
+      mark(story);
+    });
+  });
+  document.querySelectorAll('a.trace').forEach((a) => {
+    a.addEventListener('click', (event) => {
+      event.preventDefault();
+      mark(a.closest('.story'));
+    });
+  });
+})();
+</script>
+</body>
+</html>

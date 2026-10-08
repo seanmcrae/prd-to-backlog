@@ -1,0 +1,14 @@
+Score: 96/100 (A)
+Story quality: 92.7/100
+Traceability: 11/11 requirements covered (100%)
+Dependency cycles: 0
+Findings: 0 errors, 8 warnings, 10 info
+
+warning ST-0855f9      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-7903c6      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-7adf64      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-FR-4        inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-FR-6        inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-FR-7        inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-FR-8        inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-FR-8        vague-language               Vague wording: "clear". Replace with a measurable target.

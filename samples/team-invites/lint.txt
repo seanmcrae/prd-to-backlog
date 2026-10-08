@@ -1,0 +1,13 @@
+Score: 97/100 (A)
+Story quality: 94.2/100
+Traceability: 12/12 requirements covered (100%)
+Dependency cycles: 0
+Findings: 0 errors, 7 warnings, 12 info
+
+warning AC-b7f7fa-1    untestable-criterion         Then-clause uses subjective terms (fast, easy): "the invite flow should be fast and easy for invitees". State a measurable or visible result.
+warning ST-03f995      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-51ea02      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-9b69c7      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-b7f7fa      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.
+warning ST-b7f7fa      vague-language               Vague wording: "fast", "easy". Replace with a measurable target.
+warning ST-c74591      inferred-criterion           All criteria were inferred; the PRD gives no testable detail for this story.

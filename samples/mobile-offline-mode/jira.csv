@@ -1,0 +1,93 @@
+Issue Id,Issue Type,Summary,Description,Priority,Story Points,Parent Id,Inward issue link (Blocks),Labels,Labels,Labels
+1,Epic,Offline Mode for the Field Inspections App,"Field inspectors use the mobile app at construction sites and rural facilities where signal is unreliable. When the connection drops, the app shows a spinner and inspectors lose notes and photos. Inspectors fall back to paper and re-type reports later.",,,,,prd2backlog-EP-5715ce,,
+2,Epic,Offline Mode for the Field Inspections App: non-functional requirements,"Requirements under ""Offline Mode for the Field Inspections App > Non-functional requirements"".",,,,,prd2backlog-EP-bfd533,,
+3,Story,Download assigned inspections for offline use before leaving coverage,"As a field inspector, I want to download assigned inspections for offline use before leaving coverage, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the field inspector downloads assigned inspections for offline use before leaving coverage, *then* the download includes checklists, prior findings and site documents
+
+h4. Traceability
+* REQ-c3081d (examples/mobile-offline-mode.md:27): Inspectors must be able to download assigned inspections for offline use before leaving coverage.
+
+Estimate rationale: base 1; +2 distributed-state complexity (offline) = score 3 -> 3 pts",High,3,1,,prd2backlog-ST-c3081d,benefit-inferred,
+4,Story,"Fill in checklists, add notes and capture photos while offline","As a field inspector, I want to fill in checklists, add notes and capture photos while offline, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the field inspector fills in checklists, add notes and capture photos while offline, *then* all offline changes are stored locally and encrypted at rest
+
+h4. Traceability
+* REQ-e3f064 (examples/mobile-offline-mode.md:30): The app must let inspectors fill in checklists, add notes and capture photos while offline.
+
+Estimate rationale: base 1; +2 distributed-state complexity (offline); +1 security or compliance (encrypted) = score 4 -> 5 pts",High,5,1,,prd2backlog-ST-e3f064,benefit-inferred,
+5,Story,Sync queued changes to the server automatically in the background,"As a field inspector, I want the system to sync queued changes to the server automatically in the background, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* connectivity returns, *then* the app must sync queued changes to the server automatically in the background
+
+h4. Traceability
+* REQ-5199d9 (examples/mobile-offline-mode.md:33): When connectivity returns, the app must sync queued changes to the server automatically in the background.
+
+Estimate rationale: base 1; +2 distributed-state complexity (sync, queued, background) = score 3 -> 3 pts",High,3,1,,prd2backlog-ST-5199d9,benefit-inferred,
+6,Story,Sync must resume after interruption without duplicating photos,"As a field inspector, I want sync to resume after interruption without duplicating photos, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the behaviour is exercised, *then* sync must resume after interruption without duplicating photos
+
+h4. Traceability
+* REQ-327858 (examples/mobile-offline-mode.md:33): Sync must resume after interruption without duplicating photos.
+
+Estimate rationale: base 1; +2 distributed-state complexity (sync, resume) = score 3 -> 3 pts",High,3,1,5,prd2backlog-ST-327858,benefit-inferred,
+7,Story,Detect the conflict and let the inspector choose which version of each...,"As a field inspector, I want the system to detect the conflict and let the inspector choose which version of each conflicting field to keep, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the same inspection was edited on the server while the inspector was offline, *then* the app must detect the conflict and let the inspector choose which version of each conflicting field to keep
+
+h4. Traceability
+* REQ-bc70e9 (examples/mobile-offline-mode.md:36): If the same inspection was edited on the server while the inspector was offline, the app must detect the conflict and let the inspector choose which version of each conflicting field to keep.
+
+Estimate rationale: base 1; +2 distributed-state complexity (offline, conflict, conflicting) = score 3 -> 3 pts",High,3,1,,prd2backlog-ST-bc70e9,benefit-inferred,
+8,Story,Show a clear offline indicator and the number of changes waiting to sync,"As a field inspector, I want the system to show a clear offline indicator and the number of changes waiting to sync, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the system shows a clear offline indicator and the number of changes waiting to sync, *then* the app should show a clear offline indicator and the number of changes waiting to sync
+
+h4. Traceability
+* REQ-7d05f0 (examples/mobile-offline-mode.md:39): The app should show a clear offline indicator and the number of changes waiting to sync.
+
+Estimate rationale: base 1; +2 distributed-state complexity (offline, sync) = score 3 -> 3 pts",High,3,1,,prd2backlog-ST-7d05f0,benefit-inferred,
+9,Story,Pre-fetch map tiles for assigned sites,"As a field inspector, I want to pre-fetch map tiles for assigned sites, so that directions work offline.
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the field inspector pre-fetches map tiles for assigned sites, *then* inspectors could pre-fetch map tiles for assigned sites so directions work offline
+
+h4. Traceability
+* REQ-0d2dcf (examples/mobile-offline-mode.md:43): Inspectors could pre-fetch map tiles for assigned sites so directions work offline.
+
+Estimate rationale: base 1; +2 distributed-state complexity (offline) = score 3 -> 3 pts",Low,3,1,,prd2backlog-ST-0d2dcf,,
+10,Story,Offline storage must support at least 50 inspections and 2 GB of photos per...,"As a field inspector, I want offline storage to support at least 50 inspections and 2 GB of photos per device, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the behaviour is exercised, *then* offline storage must support at least 50 inspections and 2 GB of photos per device
+
+h4. Traceability
+* REQ-8aae2b (examples/mobile-offline-mode.md:47): Offline storage must support at least 50 inspections and 2 GB of photos per device.
+
+Estimate rationale: base 1; +2 distributed-state complexity (offline) = score 3 -> 3 pts",High,3,2,,prd2backlog-ST-8aae2b,non-functional,benefit-inferred
+11,Story,Local data must be encrypted with a key stored in the platform keystore,"As a field inspector, I want local data to be encrypted with a key stored in the platform keystore, so that it supports the goal ""No inspection data is lost because of connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the behaviour is exercised, *then* local data must be encrypted with a key stored in the platform keystore
+
+h4. Traceability
+* REQ-34651f (examples/mobile-offline-mode.md:48): Local data must be encrypted with a key stored in the platform keystore.
+
+Estimate rationale: base 1; +1 security or compliance (encrypted, keystore) = score 2 -> 2 pts",High,2,2,,prd2backlog-ST-34651f,non-functional,benefit-inferred
+12,Story,Sync of a 20-photo inspection should complete within 3 minutes on a 3G...,"As a field inspector, I want sync of a 20-photo inspection to complete within 3 minutes on a 3G connection, so that it supports the goal ""Inspectors can complete a full inspection with no connectivity"".
+
+h4. Acceptance criteria
+* *Given* a field inspector, *when* the behaviour is exercised, *then* sync of a 20-photo inspection should complete within 3 minutes on a 3G connection
+
+h4. Traceability
+* REQ-6fe87c (examples/mobile-offline-mode.md:49): Sync of a 20-photo inspection should complete within 3 minutes on a 3G connection.
+
+Estimate rationale: base 1; +2 distributed-state complexity (sync); +1 measurable performance target (within 3 minutes) = score 4 -> 5 pts",Medium,5,2,5,prd2backlog-ST-6fe87c,non-functional,benefit-inferred

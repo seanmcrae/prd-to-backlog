@@ -1,0 +1,671 @@
+{
+  "schemaVersion": "1",
+  "source": {
+    "title": "Usage-Based Billing",
+    "path": "examples/usage-based-billing.md",
+    "sha256": "648ef278cdea22b3e3efac4d2fba2d6e0857d814b4a51e763c3073855f744836"
+  },
+  "generator": {
+    "name": "heuristic"
+  },
+  "requirements": [
+    {
+      "id": "REQ-FR-1",
+      "sourceId": "FR-1",
+      "text": "The system must meter every billable API call per customer account with an idempotency key.",
+      "kind": "functional",
+      "priority": "must",
+      "details": [
+        "If the same idempotency key is received twice, then usage is counted once."
+      ],
+      "source": {
+        "line": 33,
+        "endLine": 33,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-FR-2",
+      "sourceId": "FR-2",
+      "text": "The system must aggregate metered usage into hourly totals per account and price dimension.",
+      "kind": "functional",
+      "priority": "must",
+      "details": [
+        "When an hour closes, then its totals are final within 15 minutes."
+      ],
+      "source": {
+        "line": 34,
+        "endLine": 34,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-FR-3",
+      "sourceId": "FR-3",
+      "text": "Billing admins can view current-period usage and projected charges on the billing page. Depends on FR-2.",
+      "kind": "functional",
+      "priority": "must",
+      "details": [
+        "Projected charges use the trailing 7-day average and are labelled as an estimate."
+      ],
+      "source": {
+        "line": 35,
+        "endLine": 35,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-FR-4",
+      "sourceId": "FR-4",
+      "text": "The system must generate a monthly invoice that itemises seat charges and usage charges. Depends on FR-2.",
+      "kind": "functional",
+      "priority": "must",
+      "details": [],
+      "source": {
+        "line": 36,
+        "endLine": 36,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-FR-5",
+      "sourceId": "FR-5",
+      "text": "Billing admins can set a monthly spend alert threshold and receive an email when 80% and 100% are reached.",
+      "kind": "functional",
+      "priority": "should",
+      "details": [
+        "When usage crosses a threshold, then exactly one alert email is sent per threshold per period."
+      ],
+      "source": {
+        "line": 37,
+        "endLine": 37,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-FR-6",
+      "sourceId": "FR-6",
+      "text": "Developers can query usage for their account through a usage API endpoint.",
+      "kind": "functional",
+      "priority": "should",
+      "details": [],
+      "source": {
+        "line": 38,
+        "endLine": 38,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-FR-7",
+      "sourceId": "FR-7",
+      "text": "Finance analysts can export monthly usage and invoice lines as CSV for reconciliation. Depends on FR-4.",
+      "kind": "functional",
+      "priority": "should",
+      "details": [],
+      "source": {
+        "line": 39,
+        "endLine": 39,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-FR-8",
+      "sourceId": "FR-8",
+      "text": "Billing admins can download past invoices as PDF.",
+      "kind": "functional",
+      "priority": "could",
+      "details": [],
+      "source": {
+        "line": 40,
+        "endLine": 40,
+        "section": [
+          "Usage-Based Billing",
+          "Functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-0855f9",
+      "text": "Usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms.",
+      "kind": "non-functional",
+      "priority": "must",
+      "details": [],
+      "source": {
+        "line": 51,
+        "endLine": 51,
+        "section": [
+          "Usage-Based Billing",
+          "Non-functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-7903c6",
+      "text": "Invoices must reconcile to metered usage with zero unexplained difference at month close.",
+      "kind": "non-functional",
+      "priority": "must",
+      "details": [],
+      "source": {
+        "line": 52,
+        "endLine": 52,
+        "section": [
+          "Usage-Based Billing",
+          "Non-functional requirements"
+        ]
+      }
+    },
+    {
+      "id": "REQ-7adf64",
+      "text": "Pricing changes must be versioned so past invoices can be regenerated exactly.",
+      "kind": "non-functional",
+      "priority": "must",
+      "details": [],
+      "source": {
+        "line": 53,
+        "endLine": 53,
+        "section": [
+          "Usage-Based Billing",
+          "Non-functional requirements"
+        ]
+      }
+    }
+  ],
+  "outOfScope": [
+    {
+      "text": "Prepaid credits and committed-use discounts.",
+      "source": {
+        "line": 57,
+        "endLine": 57,
+        "section": [
+          "Usage-Based Billing",
+          "Out of scope"
+        ]
+      }
+    },
+    {
+      "text": "Multi-currency invoicing.",
+      "source": {
+        "line": 58,
+        "endLine": 58,
+        "section": [
+          "Usage-Based Billing",
+          "Out of scope"
+        ]
+      }
+    },
+    {
+      "text": "Tax calculation changes.",
+      "source": {
+        "line": 59,
+        "endLine": 59,
+        "section": [
+          "Usage-Based Billing",
+          "Out of scope"
+        ]
+      }
+    }
+  ],
+  "epics": [
+    {
+      "id": "EP-0e7c4c",
+      "title": "Usage-Based Billing",
+      "description": "We currently bill a flat monthly price per seat. Customers running large API workloads pay the same as light users, and finance cannot price heavy usage. This PRD introduces metered billing for API calls on top of the seat price.",
+      "requirementIds": [
+        "REQ-FR-1",
+        "REQ-FR-2",
+        "REQ-FR-3",
+        "REQ-FR-4",
+        "REQ-FR-5",
+        "REQ-FR-6",
+        "REQ-FR-7",
+        "REQ-FR-8"
+      ]
+    },
+    {
+      "id": "EP-83bd65",
+      "title": "Usage-Based Billing: non-functional requirements",
+      "description": "Requirements under \"Usage-Based Billing > Non-functional requirements\".",
+      "requirementIds": [
+        "REQ-0855f9",
+        "REQ-7903c6",
+        "REQ-7adf64"
+      ]
+    }
+  ],
+  "stories": [
+    {
+      "id": "ST-FR-1",
+      "epicId": "EP-0e7c4c",
+      "title": "Meter every billable API call per customer account with an idempotency key",
+      "asA": "billing admin",
+      "iWant": "the system to meter every billable API call per customer account with an idempotency key",
+      "soThat": "it supports the goal \"Charge customers in proportion to API usage\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-1-1",
+          "given": "a billing admin",
+          "when": "the same idempotency key is received twice",
+          "then": "usage is counted once",
+          "origin": "prd"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-1"
+      ],
+      "estimate": {
+        "points": 3,
+        "rationale": "base 1; +2 distributed-state complexity (idempotency) = score 3 -> 3 pts"
+      },
+      "priority": "must",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-FR-2",
+      "epicId": "EP-0e7c4c",
+      "title": "Aggregate metered usage into hourly totals per account and price dimension",
+      "asA": "billing admin",
+      "iWant": "the system to aggregate metered usage into hourly totals per account and price dimension",
+      "soThat": "it supports the goal \"Close the monthly books without manual usage reconciliation\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-2-1",
+          "given": "a billing admin",
+          "when": "an hour closes",
+          "then": "its totals are final within 15 minutes",
+          "origin": "prd"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-2"
+      ],
+      "estimate": {
+        "points": 5,
+        "rationale": "base 1; +2 distributed-state complexity (aggregate); +1 measurable performance target (within 15 minutes) = score 4 -> 5 pts"
+      },
+      "priority": "must",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-FR-3",
+      "epicId": "EP-0e7c4c",
+      "title": "View current-period usage and projected charges on the billing page",
+      "asA": "billing admin",
+      "iWant": "to view current-period usage and projected charges on the billing page",
+      "soThat": "it supports the goal \"Charge customers in proportion to API usage\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-3-1",
+          "given": "a billing admin",
+          "when": "the billing admin views current-period usage and projected charges on the billing page",
+          "then": "projected charges use the trailing 7-day average and are labelled as an estimate",
+          "origin": "prd"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-3"
+      ],
+      "estimate": {
+        "points": 1,
+        "rationale": "base 1 = score 1 -> 1 pt"
+      },
+      "priority": "must",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-FR-4",
+      "epicId": "EP-0e7c4c",
+      "title": "Generate a monthly invoice that itemises seat charges and usage charges",
+      "asA": "billing admin",
+      "iWant": "the system to generate a monthly invoice that itemises seat charges and usage charges",
+      "soThat": "it supports the goal \"Charge customers in proportion to API usage\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-4-1",
+          "given": "a billing admin",
+          "when": "the system generates a monthly invoice that itemises seat charges and usage charges",
+          "then": "the system must generate a monthly invoice that itemises seat charges and usage charges",
+          "origin": "inferred"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-4"
+      ],
+      "estimate": {
+        "points": 1,
+        "rationale": "base 1 = score 1 -> 1 pt"
+      },
+      "priority": "must",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-FR-5",
+      "epicId": "EP-0e7c4c",
+      "title": "Set a monthly spend alert threshold and receive an email when 80% and 100% are...",
+      "asA": "billing admin",
+      "iWant": "to set a monthly spend alert threshold and receive an email when 80% and 100% are reached",
+      "soThat": "it supports the goal \"Close the monthly books without manual usage reconciliation\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-5-1",
+          "given": "a billing admin",
+          "when": "usage crosses a threshold",
+          "then": "exactly one alert email is sent per threshold per period",
+          "origin": "prd"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-5"
+      ],
+      "estimate": {
+        "points": 1,
+        "rationale": "base 1 = score 1 -> 1 pt"
+      },
+      "priority": "should",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-FR-6",
+      "epicId": "EP-0e7c4c",
+      "title": "Query usage for their account through a usage API endpoint",
+      "asA": "developer",
+      "iWant": "to query usage for their account through a usage API endpoint",
+      "soThat": "it supports the goal \"Charge customers in proportion to API usage\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-6-1",
+          "given": "a developer",
+          "when": "the developer queries usage for their account through a usage API endpoint",
+          "then": "developers can query usage for their account through a usage API endpoint",
+          "origin": "inferred"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-6"
+      ],
+      "estimate": {
+        "points": 3,
+        "rationale": "base 1; +2 external integration (api endpoint) = score 3 -> 3 pts"
+      },
+      "priority": "should",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-FR-7",
+      "epicId": "EP-0e7c4c",
+      "title": "Export monthly usage and invoice lines as CSV for reconciliation",
+      "asA": "finance analyst",
+      "iWant": "to export monthly usage and invoice lines as CSV for reconciliation",
+      "soThat": "it supports the goal \"Close the monthly books without manual usage reconciliation\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-7-1",
+          "given": "a finance analyst",
+          "when": "the finance analyst exports monthly usage and invoice lines as CSV for reconciliation",
+          "then": "finance analysts can export monthly usage and invoice lines as CSV for reconciliation",
+          "origin": "inferred"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-7"
+      ],
+      "estimate": {
+        "points": 5,
+        "rationale": "base 1; +2 external integration (csv); +1 security or compliance (reconciliation) = score 4 -> 5 pts"
+      },
+      "priority": "should",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-FR-8",
+      "epicId": "EP-0e7c4c",
+      "title": "Download past invoices as PDF",
+      "asA": "billing admin",
+      "iWant": "to download past invoices as PDF",
+      "soThat": "it supports the goal \"Give customers a clear, near-real-time view of what they will be billed\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-FR-8-1",
+          "given": "a billing admin",
+          "when": "the billing admin downloads past invoices as PDF",
+          "then": "billing admins can download past invoices as PDF",
+          "origin": "inferred"
+        }
+      ],
+      "requirementIds": [
+        "REQ-FR-8"
+      ],
+      "estimate": {
+        "points": 3,
+        "rationale": "base 1; +2 external integration (pdf) = score 3 -> 3 pts"
+      },
+      "priority": "could",
+      "labels": [
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-0855f9",
+      "epicId": "EP-83bd65",
+      "title": "Usage ingestion must sustain 5,000 events per second with p99 write latency...",
+      "asA": "billing admin",
+      "iWant": "usage ingestion to sustain 5,000 events per second with p99 write latency under 50 ms",
+      "soThat": "it supports the goal \"Charge customers in proportion to API usage\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-0855f9-1",
+          "given": "a billing admin",
+          "when": "the behaviour is exercised",
+          "then": "usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms",
+          "origin": "inferred"
+        }
+      ],
+      "requirementIds": [
+        "REQ-0855f9"
+      ],
+      "estimate": {
+        "points": 2,
+        "rationale": "base 1; +1 measurable performance target (5,000 events, per second, p99) = score 2 -> 2 pts"
+      },
+      "priority": "must",
+      "labels": [
+        "non-functional",
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-7903c6",
+      "epicId": "EP-83bd65",
+      "title": "Invoices must reconcile to metered usage with zero unexplained difference at...",
+      "asA": "billing admin",
+      "iWant": "invoices to reconcile to metered usage with zero unexplained difference at month close",
+      "soThat": "it supports the goal \"Close the monthly books without manual usage reconciliation\"",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-7903c6-1",
+          "given": "a billing admin",
+          "when": "the behaviour is exercised",
+          "then": "invoices must reconcile to metered usage with zero unexplained difference at month close",
+          "origin": "inferred"
+        }
+      ],
+      "requirementIds": [
+        "REQ-7903c6"
+      ],
+      "estimate": {
+        "points": 2,
+        "rationale": "base 1; +1 security or compliance (reconcile) = score 2 -> 2 pts"
+      },
+      "priority": "must",
+      "labels": [
+        "non-functional",
+        "benefit-inferred"
+      ]
+    },
+    {
+      "id": "ST-7adf64",
+      "epicId": "EP-83bd65",
+      "title": "Pricing changes must be versioned",
+      "asA": "billing admin",
+      "iWant": "pricing changes to be versioned",
+      "soThat": "past invoices can be regenerated exactly",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-7adf64-1",
+          "given": "a billing admin",
+          "when": "the behaviour is exercised",
+          "then": "pricing changes must be versioned so past invoices can be regenerated exactly",
+          "origin": "inferred"
+        }
+      ],
+      "requirementIds": [
+        "REQ-7adf64"
+      ],
+      "estimate": {
+        "points": 1,
+        "rationale": "base 1 = score 1 -> 1 pt"
+      },
+      "priority": "must",
+      "labels": [
+        "non-functional"
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "ST-FR-2",
+      "to": "ST-FR-3",
+      "kind": "explicit",
+      "reason": "PRD states FR-3 depends on FR-2"
+    },
+    {
+      "from": "ST-FR-2",
+      "to": "ST-FR-4",
+      "kind": "explicit",
+      "reason": "PRD states FR-4 depends on FR-2"
+    },
+    {
+      "from": "ST-FR-4",
+      "to": "ST-FR-7",
+      "kind": "explicit",
+      "reason": "PRD states FR-7 depends on FR-4"
+    },
+    {
+      "from": "ST-FR-1",
+      "to": "ST-FR-2",
+      "kind": "inferred",
+      "reason": "acts on \"meter\", which ST-FR-1 introduces"
+    },
+    {
+      "from": "ST-FR-2",
+      "to": "ST-FR-6",
+      "kind": "inferred",
+      "reason": "acts on \"usag\", which ST-FR-2 introduces"
+    },
+    {
+      "from": "ST-FR-2",
+      "to": "ST-FR-7",
+      "kind": "inferred",
+      "reason": "acts on \"usag\", which ST-FR-2 introduces"
+    },
+    {
+      "from": "ST-FR-4",
+      "to": "ST-FR-8",
+      "kind": "inferred",
+      "reason": "acts on \"invoic\", which ST-FR-4 introduces"
+    },
+    {
+      "from": "ST-FR-2",
+      "to": "ST-0855f9",
+      "kind": "inferred",
+      "reason": "acts on \"usag\", which ST-FR-2 introduces"
+    },
+    {
+      "from": "ST-FR-4",
+      "to": "ST-7903c6",
+      "kind": "inferred",
+      "reason": "acts on \"invoic\", which ST-FR-4 introduces"
+    }
+  ],
+  "risks": [
+    {
+      "id": "RISK-5ee2dd",
+      "description": "Metering bugs directly cause over- or under-billing and erode customer trust.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "",
+      "relatedIds": [
+        "ST-FR-1"
+      ],
+      "origin": "prd"
+    },
+    {
+      "id": "RISK-c891e5",
+      "description": "Customers may react badly to bill increases without warning.",
+      "likelihood": "medium",
+      "impact": "medium",
+      "mitigation": "",
+      "relatedIds": [
+        "ST-FR-3",
+        "ST-FR-8"
+      ],
+      "origin": "prd"
+    },
+    {
+      "id": "RISK-9c1c88",
+      "description": "Unresolved question: Do we offer a free usage tier per plan, and how large?",
+      "likelihood": "medium",
+      "impact": "medium",
+      "mitigation": "Resolve with the PRD owner before the related stories enter a sprint.",
+      "relatedIds": [],
+      "origin": "derived"
+    },
+    {
+      "id": "RISK-8d81e6",
+      "description": "External dependency: The payments provider integration must support adding usage line items to invoices.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Confirm scope and timeline with the owning team before committing dependents.",
+      "relatedIds": [
+        "ST-FR-4",
+        "ST-FR-7",
+        "ST-7903c6"
+      ],
+      "origin": "derived"
+    }
+  ]
+}

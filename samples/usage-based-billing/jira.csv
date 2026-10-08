@@ -1,0 +1,102 @@
+Issue Id,Issue Type,Summary,Description,Priority,Story Points,Parent Id,Inward issue link (Blocks),Labels,Labels,Labels
+1,Epic,Usage-Based Billing,"We currently bill a flat monthly price per seat. Customers running large API workloads pay the same as light users, and finance cannot price heavy usage. This PRD introduces metered billing for API calls on top of the seat price.",,,,,prd2backlog-EP-0e7c4c,,
+2,Epic,Usage-Based Billing: non-functional requirements,"Requirements under ""Usage-Based Billing > Non-functional requirements"".",,,,,prd2backlog-EP-83bd65,,
+3,Story,Meter every billable API call per customer account with an idempotency key,"As a billing admin, I want the system to meter every billable API call per customer account with an idempotency key, so that it supports the goal ""Charge customers in proportion to API usage"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* the same idempotency key is received twice, *then* usage is counted once
+
+h4. Traceability
+* FR-1 (examples/usage-based-billing.md:33): The system must meter every billable API call per customer account with an idempotency key.
+
+Estimate rationale: base 1; +2 distributed-state complexity (idempotency) = score 3 -> 3 pts",High,3,1,,prd2backlog-ST-FR-1,benefit-inferred,
+4,Story,Aggregate metered usage into hourly totals per account and price dimension,"As a billing admin, I want the system to aggregate metered usage into hourly totals per account and price dimension, so that it supports the goal ""Close the monthly books without manual usage reconciliation"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* an hour closes, *then* its totals are final within 15 minutes
+
+h4. Traceability
+* FR-2 (examples/usage-based-billing.md:34): The system must aggregate metered usage into hourly totals per account and price dimension.
+
+Estimate rationale: base 1; +2 distributed-state complexity (aggregate); +1 measurable performance target (within 15 minutes) = score 4 -> 5 pts",High,5,1,3,prd2backlog-ST-FR-2,benefit-inferred,
+5,Story,View current-period usage and projected charges on the billing page,"As a billing admin, I want to view current-period usage and projected charges on the billing page, so that it supports the goal ""Charge customers in proportion to API usage"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* the billing admin views current-period usage and projected charges on the billing page, *then* projected charges use the trailing 7-day average and are labelled as an estimate
+
+h4. Traceability
+* FR-3 (examples/usage-based-billing.md:35): Billing admins can view current-period usage and projected charges on the billing page. Depends on FR-2.
+
+Estimate rationale: base 1 = score 1 -> 1 pt",High,1,1,4,prd2backlog-ST-FR-3,benefit-inferred,
+6,Story,Generate a monthly invoice that itemises seat charges and usage charges,"As a billing admin, I want the system to generate a monthly invoice that itemises seat charges and usage charges, so that it supports the goal ""Charge customers in proportion to API usage"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* the system generates a monthly invoice that itemises seat charges and usage charges, *then* the system must generate a monthly invoice that itemises seat charges and usage charges
+
+h4. Traceability
+* FR-4 (examples/usage-based-billing.md:36): The system must generate a monthly invoice that itemises seat charges and usage charges. Depends on FR-2.
+
+Estimate rationale: base 1 = score 1 -> 1 pt",High,1,1,4,prd2backlog-ST-FR-4,benefit-inferred,
+7,Story,Set a monthly spend alert threshold and receive an email when 80% and 100% are...,"As a billing admin, I want to set a monthly spend alert threshold and receive an email when 80% and 100% are reached, so that it supports the goal ""Close the monthly books without manual usage reconciliation"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* usage crosses a threshold, *then* exactly one alert email is sent per threshold per period
+
+h4. Traceability
+* FR-5 (examples/usage-based-billing.md:37): Billing admins can set a monthly spend alert threshold and receive an email when 80% and 100% are reached.
+
+Estimate rationale: base 1 = score 1 -> 1 pt",Medium,1,1,,prd2backlog-ST-FR-5,benefit-inferred,
+8,Story,Query usage for their account through a usage API endpoint,"As a developer, I want to query usage for their account through a usage API endpoint, so that it supports the goal ""Charge customers in proportion to API usage"".
+
+h4. Acceptance criteria
+* *Given* a developer, *when* the developer queries usage for their account through a usage API endpoint, *then* developers can query usage for their account through a usage API endpoint
+
+h4. Traceability
+* FR-6 (examples/usage-based-billing.md:38): Developers can query usage for their account through a usage API endpoint.
+
+Estimate rationale: base 1; +2 external integration (api endpoint) = score 3 -> 3 pts",Medium,3,1,4,prd2backlog-ST-FR-6,benefit-inferred,
+9,Story,Export monthly usage and invoice lines as CSV for reconciliation,"As a finance analyst, I want to export monthly usage and invoice lines as CSV for reconciliation, so that it supports the goal ""Close the monthly books without manual usage reconciliation"".
+
+h4. Acceptance criteria
+* *Given* a finance analyst, *when* the finance analyst exports monthly usage and invoice lines as CSV for reconciliation, *then* finance analysts can export monthly usage and invoice lines as CSV for reconciliation
+
+h4. Traceability
+* FR-7 (examples/usage-based-billing.md:39): Finance analysts can export monthly usage and invoice lines as CSV for reconciliation. Depends on FR-4.
+
+Estimate rationale: base 1; +2 external integration (csv); +1 security or compliance (reconciliation) = score 4 -> 5 pts",Medium,5,1,"6,4",prd2backlog-ST-FR-7,benefit-inferred,
+10,Story,Download past invoices as PDF,"As a billing admin, I want to download past invoices as PDF, so that it supports the goal ""Give customers a clear, near-real-time view of what they will be billed"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* the billing admin downloads past invoices as PDF, *then* billing admins can download past invoices as PDF
+
+h4. Traceability
+* FR-8 (examples/usage-based-billing.md:40): Billing admins can download past invoices as PDF.
+
+Estimate rationale: base 1; +2 external integration (pdf) = score 3 -> 3 pts",Low,3,1,6,prd2backlog-ST-FR-8,benefit-inferred,
+11,Story,"Usage ingestion must sustain 5,000 events per second with p99 write latency...","As a billing admin, I want usage ingestion to sustain 5,000 events per second with p99 write latency under 50 ms, so that it supports the goal ""Charge customers in proportion to API usage"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* the behaviour is exercised, *then* usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms
+
+h4. Traceability
+* REQ-0855f9 (examples/usage-based-billing.md:51): Usage ingestion must sustain 5,000 events per second with p99 write latency under 50 ms.
+
+Estimate rationale: base 1; +1 measurable performance target (5,000 events, per second, p99) = score 2 -> 2 pts",High,2,2,4,prd2backlog-ST-0855f9,non-functional,benefit-inferred
+12,Story,Invoices must reconcile to metered usage with zero unexplained difference at...,"As a billing admin, I want invoices to reconcile to metered usage with zero unexplained difference at month close, so that it supports the goal ""Close the monthly books without manual usage reconciliation"".
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* the behaviour is exercised, *then* invoices must reconcile to metered usage with zero unexplained difference at month close
+
+h4. Traceability
+* REQ-7903c6 (examples/usage-based-billing.md:52): Invoices must reconcile to metered usage with zero unexplained difference at month close.
+
+Estimate rationale: base 1; +1 security or compliance (reconcile) = score 2 -> 2 pts",High,2,2,6,prd2backlog-ST-7903c6,non-functional,benefit-inferred
+13,Story,Pricing changes must be versioned,"As a billing admin, I want pricing changes to be versioned, so that past invoices can be regenerated exactly.
+
+h4. Acceptance criteria
+* *Given* a billing admin, *when* the behaviour is exercised, *then* pricing changes must be versioned so past invoices can be regenerated exactly
+
+h4. Traceability
+* REQ-7adf64 (examples/usage-based-billing.md:53): Pricing changes must be versioned so past invoices can be regenerated exactly.
+
+Estimate rationale: base 1 = score 1 -> 1 pt",High,1,2,,prd2backlog-ST-7adf64,non-functional,
