@@ -78,6 +78,19 @@ describe("README numbers card", () => {
   });
 });
 
+describe("PRODUCT.md minimum viable quality", () => {
+  it("quotes today's readings from a fresh eval", async () => {
+    const runs = await evalRuns();
+    const phrases = total(expectations.map((e) => e.requirements.length));
+    const coverage = runs.map((r) => Math.round(r.capabilityCoverage * 100));
+    const scores = runs.map((r) => r.lintScore ?? 0);
+    expect(runs.every((r) => r.extractionRecall === 1)).toBe(true);
+    expect(product).toContain(`100% (${phrases} of ${phrases} today)`);
+    expect(product).toContain(`(${Math.min(...coverage)}-${Math.max(...coverage)}% today)`);
+    expect(product).toContain(`(${Math.min(...scores)}-${Math.max(...scores)} today)`);
+  });
+});
+
 describe("README failure analysis", () => {
   it("quotes the offline-mode slice", async () => {
     const runs = await evalRuns();
