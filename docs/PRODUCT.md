@@ -92,6 +92,40 @@ tool exists to surface, and they are also where an LLM generator should beat the
 eval harness is built to measure exactly that once API keys are available: same expectations,
 one row per generator.
 
+## Minimum viable quality
+
+Release thresholds for a change to the parser, a generator or the linter. The "ship" column for the
+first five rows is what `test/eval.test.ts` already enforces on the bundled synthetic PRDs; the
+"delight" column needs the messy-PRD set and a verbatim-copy baseline that do not exist yet.
+
+| Metric                               | Do not ship                              | Ship                                              | Delight                                                              | Measured today                                                          |
+| ------------------------------------ | ---------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Schema validity                      | Any backlog that fails `validateBacklog` | 3 of 3                                            | Every PRD in a larger, messier set                                   | Yes                                                                     |
+| Extraction recall                    | Below 100% on any bundled PRD            | 100% (33 of 33 today)                             | 95% or higher on messy PRDs                                          | Yes, bundled only                                                       |
+| Traceability coverage                | Below 100%                               | 100%                                              | 100% after a PRD revision, with changed requirements reported by ID  | Yes                                                                     |
+| Capability coverage, per PRD         | Below 90%                                | 90% or higher (92-100% today)                     | 100%, and clearly above a verbatim-copy baseline                     | Yes, but with no baseline (issue #6)                                    |
+| Lint score, per PRD                  | Below 90                                 | 90 or higher (94-97 today)                        | 95 or higher with no `untestable-criterion` warning surviving review | Yes                                                                     |
+| Invented scope from an LLM generator | Any untraced story reaching the output   | 0 untraced stories (the repair loop rejects them) | 0 invented criteria on a precision check as well                     | Untraced stories yes; criteria precision no (issue #7)                  |
+| PM acceptance rate                   | Not set                                  | Not set                                           | Not set                                                              | No; the threshold should come from the first pilot, not be guessed here |
+
+## Cost at 1x and 10x usage
+
+Estimates only, from what the repo itself defines. It defines no traffic level, so 1x is set at
+100 PRDs a month for illustration.
+
+| Usage                   | Heuristic generator (default)      | Anthropic generator: output-token ceiling | OpenAI generator |
+| ----------------------- | ---------------------------------- | ----------------------------------------- | ---------------- |
+| 1x: 100 PRDs a month    | No model calls; local compute only | 4.8M output tokens a month                | No ceiling       |
+| 10x: 1,000 PRDs a month | Same                               | 48M output tokens a month                 | No ceiling       |
+
+The Anthropic ceiling is the adapter's `max_tokens` of 16,000 per call times the default three
+validation-and-repair attempts, so 48,000 output tokens per PRD at worst. Each repair attempt also
+resends the PRD and schema as input, which the repo does not measure. The OpenAI adapter sets no
+output cap, so it has no ceiling to estimate. The repo holds no vendor prices and no measured token
+counts, so none of this is converted to dollars; issue #7 tracks recording tokens, latency and
+repair attempts per case. The heuristic path costs the same at 1x and 10x because it never calls a
+model, and the HTTP API is stateless, so it scales with plain compute.
+
 ## Trade-offs and alternatives considered
 
 **Heuristic vs LLM generation.** The heuristic is free, instant, private and deterministic, and

@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933.svg)](package.json)
 
-Turn a markdown PRD into a traceable, linted backlog, and export it to GitHub Issues, Jira or Linear.
+Decide whether a PRD is ready for sprint planning: prd-to-backlog turns a markdown PRD into a traceable, linted backlog, shows which requirements nobody can test yet, and exports the result to GitHub Issues, Jira or Linear.
 
 **Live docs:** <https://seanmcrae.github.io/prd-to-backlog/> shows each bundled sample PRD next to
 the backlog generated from it, with every story linked to the PRD lines it cites.
@@ -18,9 +18,20 @@ criteria, estimates, dependencies and risks, validates them against a zod schema
 result. The default generator is deterministic and runs offline. Anthropic and OpenAI adapters
 are optional.
 
-On the three bundled synthetic PRDs, with the offline heuristic generator and no API keys, every
-labelled requirement is extracted, every requirement is traced to a story, and lint scores range
-from 94 to 97 out of 100:
+## Numbers
+
+From `npm run eval` and `prd2backlog lint` on the three bundled **synthetic** PRDs, offline
+heuristic generator, no API keys. `test/readme-numbers.test.ts` recomputes each figure on every
+CI run.
+
+| Measure                        | Result                                                                            | Read it against                                                                                                                                                                                                        |
+| ------------------------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capability coverage (headline) | **36 / 37** hand-written capabilities appear in some story                        | No baseline is measured yet. A verbatim copy of each requirement has not been run through the eval, so this does not yet show how much the generator adds ([#6](https://github.com/seanmcrae/prd-to-backlog/issues/6)) |
+| Traceability                   | 33 / 33 requirements cited by a story; extraction recall 33 / 33 labelled phrases | The parser owns the requirement list, so this checks wiring, not judgment                                                                                                                                              |
+| Lint score                     | 94-97 / 100                                                                       | Grades the heuristic's own phrasing; most useful for comparing generators or a backlog before and after review                                                                                                         |
+| PRD gaps surfaced              | 20 of 36 acceptance criteria inferred because the PRD gave no testable detail     | This is the output a PM acts on                                                                                                                                                                                        |
+| Eval set                       | 3 synthetic PRDs, 33 requirements, 37 capabilities, 33 stories                    | Small and well-structured by design                                                                                                                                                                                    |
+| Latency, cost                  | Not measured                                                                      | The default generator makes no model calls; the LLM generators have not been run against live models ([#7](https://github.com/seanmcrae/prd-to-backlog/issues/7))                                                      |
 
 ![Eval results for the heuristic generator on the bundled synthetic PRDs](docs/img/eval-results.svg)
 
@@ -135,6 +146,51 @@ The one miss is expected. Cache retention appears in the offline PRD only as an 
 so it becomes a risk rather than a story. The chart above is drawn from the same run by
 `npm run chart`, and a test fails if the committed SVG drifts from the code's output.
 
+## Where it fails
+
+Every sample passes its regression gate, so the failures that matter show up in the weakest
+slice of the eval and in what the linter says about each backlog.
+
+### Limits of the inputs and the corpus
+
+| Slice or failure  | What the eval and lint show                                                                   | Cause                                                                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Offline-mode PRD  | Weakest sample: 92% capability coverage, lint 94; 8 of 10 stories have only inferred criteria | Most of its requirements carry no detail bullets, and cache retention appears only as an open question, so it becomes a risk rather than a story |
+| Vague PRD wording | 2 untestable-criterion warnings ("fast and easy", "a clear offline indicator")                | The heuristic keeps the PRD's words; it flags vague terms but cannot replace them with a target                                                  |
+| Missing benefits  | 31 of 33 "so that" clauses were linked to a PRD goal by the generator                         | Requirements rarely state their own benefit; each one carries a `benefit-inferred` label for review                                              |
+| Narrow corpus     | Three tidy, synthetic PRDs; no messy or real ones; no live-model rows                         | Says nothing yet about prose-only PRDs or how an LLM generator compares ([#7](https://github.com/seanmcrae/prd-to-backlog/issues/7))             |
+
+### Limits of the design
+
+| Limit                          | Evidence                                                                                                             | Consequence                                                                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| One story per requirement      | 33 requirements became 33 stories                                                                                    | Large requirements are never split, small ones never merged                                                                    |
+| Verb/noun dependency inference | Offline-mode backlog: 2 dependencies, both inferred and both from the sync story                                     | Misses semantic order, such as downloading inspections before filling them in offline                                          |
+| Keyword coverage metric        | A capability counts as covered when its keywords appear in any story, and the PRD's own bullets usually contain them | The headline cannot yet tell the generator from a copy of the PRD ([#6](https://github.com/seanmcrae/prd-to-backlog/issues/6)) |
+| Self-graded lint score         | The linter scores the heuristic's own phrasing                                                                       | A high score is a structure check, not evidence the stories are right                                                          |
+
+**Considered and rejected: pushing straight to the tracker.** "Push to Jira" is the obvious
+feature and was cut on purpose ([docs/PRODUCT.md](docs/PRODUCT.md#trade-offs-and-alternatives-considered)).
+The output is a reviewable `backlog.md` plus import files, because the inferred content above is
+exactly what a person has to check before it becomes a ticket. The cost is a manual import step.
+
+## Limitations
+
+- The heuristic generator writes one story per requirement. It does not split a large
+  requirement or merge small ones. That is a refinement call for a person or an LLM.
+- Story phrasing is pattern-based ("X can Y", "The system must Y", "As a X, I want Y"). Unusual
+  sentence shapes fall back to a literal "I want ..." clause, and the linter usually flags them.
+- Inferred dependencies come from verb/noun overlap. They catch "create before act on" chains
+  and miss semantic ones (for example, offline storage before background sync).
+- Estimates are relative signals, not velocity-calibrated forecasts.
+- The lint score grades structure and wording, not whether the product decisions are right. On
+  the bundled corpus it is also grading the heuristic's own output. It is most useful for
+  comparing generators, or a backlog before and after review.
+- The LLM adapters are covered by tests against faked HTTP responses. They have not been
+  benchmarked against live models in this repo, so the eval table above has heuristic rows only.
+- Jira and Linear CSV column names follow their importers' documented fields. Confirm the
+  column mapping in the importer UI on first use.
+
 ## How evaluation works
 
 Each bundled PRD has a hand-written expectation file in `eval/expected/`. The expectations are
@@ -199,6 +255,12 @@ flowchart LR
   matter was simpler to make line-accurate than mapping mdast positions back through
   list nesting. It is covered by its own tests.
 
+## How this was built
+
+Code was written with AI coding agents under my direction. I set the problem, success metrics and
+eval gates, and decided what shipped. Every number here comes from the committed eval scripts and
+is reproduced in CI.
+
 ## Data
 
 All PRDs in `examples/` are **synthetic**. I wrote them for this repo and each one says so in
@@ -243,23 +305,6 @@ to listen on all interfaces. The API is stateless and rejects request bodies ove
 Development scripts: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`,
 `npm run eval`, `npm run demo` (regenerates `examples/output/`), `npm run chart` (regenerates
 `docs/img/eval-results.svg`) and `npm run site` (builds the docs site into `site/`).
-
-## Limitations
-
-- The heuristic generator writes one story per requirement. It does not split a large
-  requirement or merge small ones. That is a refinement call for a person or an LLM.
-- Story phrasing is pattern-based ("X can Y", "The system must Y", "As a X, I want Y"). Unusual
-  sentence shapes fall back to a literal "I want ..." clause, and the linter usually flags them.
-- Inferred dependencies come from verb/noun overlap. They catch "create before act on" chains
-  and miss semantic ones (for example, offline storage before background sync).
-- Estimates are relative signals, not velocity-calibrated forecasts.
-- The lint score grades structure and wording, not whether the product decisions are right. On
-  the bundled corpus it is also grading the heuristic's own output. It is most useful for
-  comparing generators, or a backlog before and after review.
-- The LLM adapters are covered by tests against faked HTTP responses. They have not been
-  benchmarked against live models in this repo, so the eval table above has heuristic rows only.
-- Jira and Linear CSV column names follow their importers' documented fields. Confirm the
-  column mapping in the importer UI on first use.
 
 ## Roadmap
 
